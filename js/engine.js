@@ -6,6 +6,9 @@ const Engine = {};
 Engine.AP_BASE = 3;
 
 Engine.createInitialState = function (companyName, aiName) {
+  const communityApproval = {};
+  DATA.COMMUNITIES.forEach(c => { communityApproval[c.id] = 100 - c.resistance; });
+
   return {
     turn: 1,
     companyName: companyName || "Untitled Ambition Inc.",
@@ -25,6 +28,7 @@ Engine.createInitialState = function (companyName, aiName) {
     ownedCompanies: [],    // rival company ids acquired
     usedDemandIds: [],     // demand ids already resolved, won't repeat
     negativeStreak: 0,     // consecutive turns ending with cash below the bankruptcy line
+    communityApproval: communityApproval, // id -> 0-100 local sentiment, evolves over time
     log: [],               // {turn, text} news/history log, newest first
     chatLog: [],            // {turn, text} conversation-only log for the AI Chat tab
     pendingDemand: null,   // {demand} awaiting player response
@@ -86,6 +90,8 @@ Engine.buildDataCenter = function (state, communityId) {
   const repLoss = (c.resistance / 10) * (bribedHere ? 0.2 : 1);
   state.heat = clamp(state.heat + heatGain, 0, 100);
   state.reputation = clamp(state.reputation - repLoss, 0, 100);
+  state.communityApproval[communityId] = clamp(
+    state.communityApproval[communityId] - (bribedHere ? 8 : 20), 0, 100);
   state.dataCenters.push(communityId);
   state.actionPoints -= 1;
 
@@ -106,6 +112,7 @@ Engine.bribeOfficial = function (state, communityId) {
   const heatGain = (100 - c.corruption) / 20;
   state.heat = clamp(state.heat + heatGain, 0, 100);
   state.reputation = clamp(state.reputation - 1, 0, 100);
+  state.communityApproval[communityId] = clamp(state.communityApproval[communityId] + 15, 0, 100);
   state.actionPoints -= 1;
 
   pushLog(state, `Local officials in ${c.name} received a "consulting fee."`, "money");
@@ -190,6 +197,9 @@ Engine.prCampaign = function (state) {
   state.cash -= cashCost;
   const gain = 8 + Math.random() * 5;
   state.reputation = clamp(state.reputation + gain, 0, 100);
+  Object.keys(state.communityApproval).forEach(id => {
+    state.communityApproval[id] = clamp(state.communityApproval[id] + 3, 0, 100);
+  });
   state.actionPoints -= 1;
   pushLog(state, `Launched a PR campaign: "We're the Good AI Company." Billboards everywhere.`, "megaphone");
   return { ok: true, message: "Reputation improved." };
@@ -305,6 +315,17 @@ Engine.endTurn = function (state) {
   state.heat = clamp(state.heat + state.capability * 0.025 - heatDecay, 0, 100);
   state.alignment = clamp(state.alignment - state.capability * 0.03, 0, 100);
   state.reputation = clamp(state.reputation + (50 - state.reputation) * 0.05, 0, 100);
+
+  Object.keys(state.communityApproval).forEach(id => {
+    const c = Engine.getCommunity(id);
+    const built = state.dataCenters.includes(id);
+    const bribedHere = state.bribed.includes(id);
+    let target = 100 - c.resistance;
+    if (built && !bribedHere) target -= 20;
+    if (built && bribedHere) target -= 5;
+    state.communityApproval[id] = clamp(
+      state.communityApproval[id] + (target - state.communityApproval[id]) * 0.12, 0, 100);
+  });
 
   if (state.cash <= -300000) {
     state.negativeStreak += 1;

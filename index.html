@@ -98,9 +98,16 @@
     </section>
 
     <section id="tab-datacenters" class="tab-panel">
-      <h2>Communities</h2>
-      <p class="panel-hint">Build data centers to expand compute and market share. Bribing officials first softens the blow.</p>
-      <div id="community-list" class="card-grid"></div>
+      <h2>Expansion Map</h2>
+      <p class="panel-hint">Pick a spot on the map, then build or bribe from the panel. Every location tracks its own approval.</p>
+      <div class="map-layout">
+        <div class="map-panel">
+          <div id="community-map" class="community-map"></div>
+        </div>
+        <div id="community-detail" class="community-detail"></div>
+      </div>
+      <h3 class="section-label">Community Approval</h3>
+      <div id="approval-chart" class="approval-chart"></div>
     </section>
 
     <section id="tab-acquisitions" class="tab-panel">

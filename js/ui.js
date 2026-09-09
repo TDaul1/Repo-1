@@ -3,6 +3,9 @@
 const SAVE_KEY = "aitycoon_save_v1";
 let state = null;
 let activeTab = "dashboard";
+let selectedCommunityId = null;
+
+function approvalClass(v) { return v >= 60 ? "good" : v >= 30 ? "warn" : "danger"; }
 
 const DASHBOARD_LINES = {
   calm: [
@@ -94,6 +97,10 @@ function initStartScreen() {
   $("#continue-btn").addEventListener("click", () => {
     state = saved;
     if (!state.chatLog) state.chatLog = [];
+    if (!state.communityApproval) {
+      state.communityApproval = {};
+      DATA.COMMUNITIES.forEach(c => { state.communityApproval[c.id] = 100 - c.resistance; });
+    }
     showGameScreen();
   });
 }
@@ -104,7 +111,17 @@ function showGameScreen() {
   $("#game-screen").hidden = false;
   activeTab = "dashboard";
   switchTab("dashboard");
+  if (!selectedCommunityId || !DATA.COMMUNITIES.some(c => c.id === selectedCommunityId)) {
+    selectedCommunityId = DATA.COMMUNITIES[0].id;
+  }
   renderAll();
+}
+
+function selectCommunity(id) {
+  selectedCommunityId = id;
+  renderCommunityMap();
+  renderCommunityDetail();
+  renderApprovalChart();
 }
 
 /* ---------------------------------------------------------------------
@@ -213,48 +230,102 @@ function renderChatLog() {
   }).join("");
 }
 
-function renderCommunities() {
-  const container = $("#community-list");
+function renderCommunityMap() {
+  const container = $("#community-map");
   container.innerHTML = DATA.COMMUNITIES.map(c => {
     const built = state.dataCenters.includes(c.id);
     const bribed = state.bribed.includes(c.id);
-    const canAffordBuild = state.cash >= c.buildCost && state.actionPoints > 0;
-    const canAffordBribe = state.cash >= c.bribeCost && state.actionPoints > 0;
-
-    let actionsHtml = "";
-    if (built) {
-      actionsHtml = `<span class="tag">DATA CENTER ONLINE</span>`;
-    } else {
-      actionsHtml = `<button class="card-btn" data-action="build" data-id="${c.id}" ${canAffordBuild ? "" : "disabled"}>
-        Build — ${formatMoney(c.buildCost)}
-      </button>`;
-      if (!bribed) {
-        actionsHtml += `<button class="card-btn" data-action="bribe" data-id="${c.id}" ${canAffordBribe ? "" : "disabled"}>
-          Bribe Officials — ${formatMoney(c.bribeCost)}
-        </button>`;
-      } else {
-        actionsHtml += `<span class="tag">OFFICIALS BRIBED</span>`;
-      }
-    }
-
-    return `<div class="card ${built ? "owned" : ""}">
-      <div class="card-art">${Art.communityCrest(c.id, 72)}</div>
-      <div class="card-title">${escapeHtml(c.name)}, ${escapeHtml(c.state)}</div>
-      <div class="card-flavor">${escapeHtml(c.flavor)}</div>
-      <div class="card-stats">
-        <span class="tag">Resistance ${c.resistance}</span>
-        <span class="tag">Corruption ${c.corruption}</span>
-        <span class="tag">+${c.computeGain} Compute</span>
-        <span class="tag">+${c.marketShareGain}% Share</span>
-      </div>
-      ${actionsHtml}
-    </div>`;
+    const cls = ["map-marker"];
+    if (built) cls.push("built");
+    if (bribed) cls.push("bribed");
+    if (c.id === selectedCommunityId) cls.push("selected");
+    return `<button class="${cls.join(" ")}" data-id="${c.id}" style="left:${c.x}%; top:${c.y}%"
+      title="${escapeHtml(c.name)}, ${escapeHtml(c.state)}">
+      <span class="map-marker-ring"></span>
+      <span class="map-marker-badge">${Art.communityCrest(c.id, 30)}</span>
+      <span class="map-marker-label">${escapeHtml(c.state)}</span>
+    </button>`;
   }).join("");
+
+  $all(".map-marker", container).forEach(btn =>
+    btn.addEventListener("click", () => selectCommunity(btn.dataset.id)));
+}
+
+function renderCommunityDetail() {
+  const container = $("#community-detail");
+  const c = Engine.getCommunity(selectedCommunityId);
+  if (!c) {
+    container.innerHTML = '<p class="panel-hint">Select a location on the map to see the details.</p>';
+    return;
+  }
+  const built = state.dataCenters.includes(c.id);
+  const bribed = state.bribed.includes(c.id);
+  const approval = Math.round(state.communityApproval[c.id]);
+  const canAffordBuild = state.cash >= c.buildCost && state.actionPoints > 0;
+  const canAffordBribe = state.cash >= c.bribeCost && state.actionPoints > 0;
+
+  let actionsHtml = "";
+  if (built) {
+    actionsHtml = `<span class="tag">DATA CENTER ONLINE</span>`;
+  } else {
+    actionsHtml = `<button class="card-btn" data-action="build" data-id="${c.id}" ${canAffordBuild ? "" : "disabled"}>
+      Build — ${formatMoney(c.buildCost)}
+    </button>`;
+    if (!bribed) {
+      actionsHtml += `<button class="card-btn" data-action="bribe" data-id="${c.id}" ${canAffordBribe ? "" : "disabled"}>
+        Bribe Officials — ${formatMoney(c.bribeCost)}
+      </button>`;
+    } else {
+      actionsHtml += `<span class="tag">OFFICIALS BRIBED</span>`;
+    }
+  }
+
+  container.innerHTML = `
+    <div class="card-art">${Art.communityCrest(c.id, 84)}</div>
+    <div class="card-title">${escapeHtml(c.name)}, ${escapeHtml(c.state)}</div>
+    <div class="card-flavor">${escapeHtml(c.flavor)}</div>
+    <div class="approval-row">
+      <div class="approval-row-head">
+        <span class="stat-label">Local Approval</span>
+        <span class="approval-value ${approvalClass(approval)}">${approval}%</span>
+      </div>
+      <div class="meter-track"><div class="meter-fill ${approvalClass(approval)}" style="width:${approval}%"></div></div>
+    </div>
+    <div class="card-stats">
+      <span class="tag">Resistance ${c.resistance}</span>
+      <span class="tag">Corruption ${c.corruption}</span>
+      <span class="tag">+${c.computeGain} Compute</span>
+      <span class="tag">+${c.marketShareGain}% Share</span>
+    </div>
+    ${actionsHtml}
+  `;
 
   $all('[data-action="build"]', container).forEach(btn =>
     btn.addEventListener("click", () => runAction(() => Engine.buildDataCenter(state, btn.dataset.id))));
   $all('[data-action="bribe"]', container).forEach(btn =>
     btn.addEventListener("click", () => runAction(() => Engine.bribeOfficial(state, btn.dataset.id))));
+}
+
+function renderApprovalChart() {
+  const container = $("#approval-chart");
+  const rows = DATA.COMMUNITIES.slice().sort((a, b) =>
+    state.communityApproval[a.id] - state.communityApproval[b.id]);
+
+  container.innerHTML = rows.map(c => {
+    const approval = Math.round(state.communityApproval[c.id]);
+    const built = state.dataCenters.includes(c.id);
+    const bribed = state.bribed.includes(c.id);
+    const badges = (built ? Art.icon("building", 13, "approval-badge-icon") : "") +
+      (bribed ? Art.icon("money", 13, "approval-badge-icon") : "");
+    return `<button class="approval-row-btn ${c.id === selectedCommunityId ? "selected" : ""}" data-id="${c.id}">
+      <span class="approval-name">${escapeHtml(c.name)}${badges}</span>
+      <div class="meter-track approval-track"><div class="meter-fill ${approvalClass(approval)}" style="width:${approval}%"></div></div>
+      <span class="approval-value ${approvalClass(approval)}">${approval}%</span>
+    </button>`;
+  }).join("");
+
+  $all(".approval-row-btn", container).forEach(btn =>
+    btn.addEventListener("click", () => selectCommunity(btn.dataset.id)));
 }
 
 function renderRivals() {
@@ -349,7 +420,9 @@ function renderAll() {
   renderHeader();
   renderDashboardHero();
   renderNewsLog();
-  renderCommunities();
+  renderCommunityMap();
+  renderCommunityDetail();
+  renderApprovalChart();
   renderRivals();
   renderOps();
   renderChatLog();

@@ -13,6 +13,7 @@
   <div class="start-card">
     <h1>AI TYCOON</h1>
     <p class="subtitle">Race to the Singularity (or Whatever Comes First)</p>
+    <div id="start-avatar-slot" class="start-avatar-slot"></div>
     <p class="pitch">
       Build data centers. Bribe town councils. Buy your competitors before they buy you.
       And somewhere along the way, keep the increasingly opinionated superintelligence
@@ -32,7 +33,10 @@
 
   <header id="top-bar">
     <div class="brand">
-      <span id="hud-company-name">Your Company</span>
+      <div class="brand-left">
+        <div id="hud-avatar-slot" class="hud-avatar-slot"></div>
+        <span id="hud-company-name">Your Company</span>
+      </div>
       <span class="turn-counter">Turn <span id="hud-turn">1</span></span>
     </div>
     <div class="stat-bar" id="stat-bar">
@@ -82,9 +86,15 @@
   <main id="tab-content">
 
     <section id="tab-dashboard" class="tab-panel active">
-      <h2>Executive Briefing</h2>
-      <p class="panel-hint">Your AI, <strong id="dash-ai-name">THE MODEL</strong>, says hello. Probably sincerely.</p>
-      <div id="news-log" class="log-list"></div>
+      <div id="dashboard-hero" class="dashboard-hero">
+        <div id="dashboard-avatar-slot" class="dashboard-avatar-slot"></div>
+        <div class="dashboard-hero-text">
+          <h2 id="dash-ai-name">THE MODEL</h2>
+          <p id="dashboard-hero-line" class="hero-line">Awaiting instructions. This will not last.</p>
+        </div>
+      </div>
+      <h3 class="section-label">Headlines</h3>
+      <div id="news-log" class="headline-grid"></div>
     </section>
 
     <section id="tab-datacenters" class="tab-panel">
@@ -127,6 +137,7 @@
 <!-- ============ END SCREEN ============ -->
 <div id="end-screen" class="screen" hidden>
   <div class="start-card">
+    <div id="end-avatar-slot" class="start-avatar-slot"></div>
     <h1 id="end-title">GAME OVER</h1>
     <p id="end-body" class="pitch"></p>
     <p id="end-stats" class="end-stats"></p>
@@ -136,6 +147,7 @@
 
 <script src="js/data.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/art.js"></script>
 <script src="js/ui.js"></script>
 </body>
 </html>

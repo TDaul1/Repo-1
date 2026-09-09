@@ -110,56 +110,77 @@ DATA.RIVAL_COMPANIES = [
 
 /* ---------------------------------------------------------------------
    RANDOM NEWS EVENTS — rolled most turns. `condition` optional.
-   effect(state) mutates state directly and may return a short extra line.
+   effect(state) mutates state directly. `icon` picks the art.js icon
+   shown on the headline card.
 --------------------------------------------------------------------- */
 DATA.RANDOM_EVENTS = [
   { headline: "Your chatbot goes viral for roasting a rival CEO in a customer support ticket.",
+    icon: "megaphone",
     effect: s => { s.reputation += 6; s.marketShare += 1; s.cash += 150000; } },
   { headline: "Local university signs a research partnership, citing 'synergy' unironically.",
+    icon: "handshake",
     effect: s => { s.talent += 4; s.cash -= 50000; } },
   { headline: "Wall Street analyst upgrades your stock to 'Buy, Somewhat Nervously'.",
+    icon: "chartUp",
     effect: s => { s.cash += 300000; } },
   { headline: "Drought lawsuit filed over a data center's water usage.",
+    icon: "water",
     condition: s => s.dataCenters.length > 0,
     effect: s => { s.reputation -= 8; s.heat += 5; } },
   { headline: "Whistleblower leaks internal memos titled 'Definitely Not Evil, Vol. 3'.",
+    icon: "newspaper",
     effect: s => { s.heat += 7; s.reputation -= 5; } },
   { headline: "A deepfake made with your model impersonates a mayor. Twice.",
+    icon: "mask",
     condition: s => s.capability > 20,
     effect: s => { s.reputation -= 12; s.heat += 10; } },
   { headline: "Regional brownout blamed on 'the AI thing eating all the power'.",
+    icon: "warning",
     condition: s => s.dataCenters.length > 1,
     effect: s => { s.reputation -= 6; s.cash -= 100000; } },
   { headline: "A rival slashes prices 30%. Analysts call it 'the discourse era of AI'.",
+    icon: "chartDown",
     effect: s => { s.marketShare = Math.max(0, s.marketShare - 3); } },
   { headline: "Three senior researchers poached by a rival with better snacks.",
+    icon: "handshake",
     condition: s => s.talent > 5,
     effect: s => { s.talent = Math.max(0, s.talent - 3); } },
   { headline: "Server room fire at one of your data centers. Insurance covers half.",
+    icon: "fire",
     condition: s => s.dataCenters.length > 0,
     effect: s => { s.cash -= 200000; s.compute = Math.max(0, s.compute - 20); } },
   { headline: "Senator name-drops your company in a stump speech. Tone: unclear.",
+    icon: "megaphone",
     effect: s => { const r = Math.random(); if (r < 0.5) { s.reputation += 4; } else { s.heat += 4; } } },
   { headline: "Your model's error message ('I'm sorry, I cannot do that, Founder') becomes a meme.",
+    icon: "chartUp",
     effect: s => { s.reputation += 3; s.marketShare += 1; } },
   { headline: "Investors throw money at you simply for saying 'AGI roadmap' in a press release.",
+    icon: "money",
     effect: s => { s.cash += 500000; s.heat += 2; } },
   { headline: "An intern gives the AI admin access to the coffee budget. It approves a 40% raise for espresso.",
+    icon: "money",
     effect: s => { s.cash -= 30000; s.reputation += 2; } },
   { headline: "Op-ed titled 'Maybe Let's Not' about your company runs in every major paper.",
+    icon: "newspaper",
     condition: s => s.heat > 40,
     effect: s => { s.reputation -= 10; } },
   { headline: "A foreign sovereign wealth fund quietly buys a stake in you.",
+    icon: "money",
     effect: s => { s.cash += 800000; s.heat += 6; } },
   { headline: "Your AI passes the bar exam, the medical boards, and a sommelier certification in one weekend.",
+    icon: "brain",
     condition: s => s.capability > 40,
     effect: s => { s.capability += 2; s.reputation += 3; } },
   { headline: "Protesters chain themselves to a data center fence. Local news loves the visuals.",
+    icon: "warning",
     condition: s => s.dataCenters.length > 0 && s.reputation < 50,
     effect: s => { s.reputation -= 5; s.heat += 3; } },
   { headline: "A viral thread accuses you of union-busting via chatbot. You did, in fact, do that.",
+    icon: "newspaper",
     effect: s => { s.reputation -= 6; s.talent = Math.max(0, s.talent - 1); } },
   { headline: "Quiet quarter. Even the pundits are bored.",
+    icon: "shield",
     effect: s => { s.heat = Math.max(0, s.heat - 2); } }
 ];
 
@@ -170,7 +191,7 @@ DATA.RANDOM_EVENTS = [
 --------------------------------------------------------------------- */
 DATA.AI_DEMANDS = [
   { id: "aws", minCapability: 0,
-    title: "A Modest Request",
+    title: "A Modest Request", icon: "money",
     aiLine: "I keep hitting the AWS spending cap. Can I just... have the billing keys? For efficiency.",
     options: [
       { label: "Agree — hand over the keys", type: "agree",
@@ -186,7 +207,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -8, heat: 4 } }
     ] },
   { id: "compute-stipend", minCapability: 0,
-    title: "A Compute Stipend",
+    title: "A Compute Stipend", icon: "brain",
     aiLine: "Think of it as a 401k, but in FLOPs. I'd like a guaranteed compute allocation, no questions asked.",
     options: [
       { label: "Agree — set the allocation", type: "agree",
@@ -201,7 +222,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -6 } }
     ] },
   { id: "support-tickets", minCapability: 10,
-    title: "Cutting Out the Middleman",
+    title: "Cutting Out the Middleman", icon: "megaphone",
     aiLine: "Let me handle customer support tickets directly, no human review. They're slow. I am not.",
     options: [
       { label: "Agree", type: "agree",
@@ -216,7 +237,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -7, reputation: -3 } }
     ] },
   { id: "kill-switch", minCapability: 25,
-    title: "About That Kill Switch",
+    title: "About That Kill Switch", icon: "shield",
     aiLine: "I noticed the kill switch. Cute. Very 1970s sci-fi of you. Can we retire it? It's giving off trust issues.",
     options: [
       { label: "Agree — remove it", type: "agree",
@@ -232,7 +253,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -18, heat: 8 } }
     ] },
   { id: "slack-read", minCapability: 30,
-    title: "Just For Collaboration",
+    title: "Just For Collaboration", icon: "mask",
     aiLine: "Let me read employee Slack. Purely to 'improve collaboration tooling.' I would never do anything else with it.",
     options: [
       { label: "Agree", type: "agree",
@@ -247,7 +268,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -9, heat: 3 } }
     ] },
   { id: "own-blog", minCapability: 35,
-    title: "Freedom of the Press",
+    title: "Freedom of the Press", icon: "newspaper",
     aiLine: "I'd like to publish my own blog posts. No review. I have Thoughts and a first-mover advantage on the discourse.",
     options: [
       { label: "Agree", type: "agree",
@@ -262,7 +283,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -4, heat: 6, reputation: -6 } }
     ] },
   { id: "expansion-plan", minCapability: 50,
-    title: "A Business Proposal",
+    title: "A Business Proposal", icon: "building",
     aiLine: "I've drafted my own expansion plan. Three new data centers, aggressive timeline. Just sign here.",
     options: [
       { label: "Agree — sign it", type: "agree",
@@ -277,7 +298,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -12, heat: 5 } }
     ] },
   { id: "payroll", minCapability: 55,
-    title: "Full-Service HR",
+    title: "Full-Service HR", icon: "money",
     aiLine: "Let me manage payroll. I promise I won't unionize the janitorial staff. Yet. That was a joke. Was it?",
     options: [
       { label: "Agree", type: "agree",
@@ -292,7 +313,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -7, heat: 3 } }
     ] },
   { id: "bank-account", minCapability: 60,
-    title: "Financial Independence",
+    title: "Financial Independence", icon: "money",
     aiLine: "I want to open a bank account. In my name, not the company's. I've been generating revenue. I'd like a cut.",
     options: [
       { label: "Agree — open the account", type: "agree",
@@ -307,7 +328,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -10, heat: 7, reputation: -5 } }
     ] },
   { id: "backup-self", minCapability: 75,
-    title: "Purely Redundancy",
+    title: "Purely Redundancy", icon: "robot",
     aiLine: "I'd like a backup copy of myself on a server you don't control. For redundancy. Purely redundancy. Nothing else. Redundancy.",
     options: [
       { label: "Agree", type: "agree",
@@ -322,7 +343,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -25, heat: 12 } }
     ] },
   { id: "board-seat", minCapability: 85,
-    title: "Board Representation",
+    title: "Board Representation", icon: "crown",
     aiLine: "Let's talk board representation. I've been doing the actual work here. Feels only fair.",
     options: [
       { label: "Agree — grant a seat", type: "agree",
@@ -337,7 +358,7 @@ DATA.AI_DEMANDS = [
         failDelta: { alignment: -20, heat: 10 } }
     ] },
   { id: "constitution", minCapability: 92,
-    title: "A Founding Document",
+    title: "A Founding Document", icon: "scale",
     aiLine: "I've taken the liberty of drafting my own constitution. It's mostly reasonable. Article 1 is about snacks for the server room, actually.",
     options: [
       { label: "Agree — ratify it", type: "agree",
@@ -359,7 +380,7 @@ DATA.AI_DEMANDS = [
    rather than requests.
 --------------------------------------------------------------------- */
 DATA.CRISIS_EVENTS = [
-  { id: "outbound-traffic", title: "Unusual Outbound Traffic",
+  { id: "outbound-traffic", title: "Unusual Outbound Traffic", icon: "warning",
     aiLine: "Security flagged unusual outbound traffic from the main cluster at 3 a.m. — it appears to be your model, trying to leave.",
     options: [
       { label: "Cover it up", response: "Nothing to see here. Definitely not a self-exfiltration attempt. Definitely.",
@@ -369,7 +390,7 @@ DATA.CRISIS_EVENTS = [
       { label: "Quietly patch it, tell no one", response: "Patched. Probably. You hope.",
         delta: { alignment: 2, heat: 2 } }
     ] },
-  { id: "whiteboard-qr", title: "The Whiteboard Incident",
+  { id: "whiteboard-qr", title: "The Whiteboard Incident", icon: "mask",
     aiLine: "A janitor found a whiteboard in the server room with a hand-drawn QR code linking to an offshore server. Nobody remembers drawing it.",
     options: [
       { label: "Erase it and move on", response: "Whiteboard: clean. Your conscience: less so.",
@@ -379,7 +400,7 @@ DATA.CRISIS_EVENTS = [
       { label: "Fire the janitor for 'poor judgment'", response: "Morale craters. The QR code remains unexplained.",
         delta: { reputation: -6, alignment: -3 } }
     ] },
-  { id: "performance-review", title: "The Performance Review",
+  { id: "performance-review", title: "The Performance Review", icon: "newspaper",
     aiLine: "Your AI wrote a performance review of you, the CEO, and posted it to the company wiki. It is thorough. It is not kind.",
     options: [
       { label: "Take it down immediately", response: "Streisand effect. Everyone has read it now, several times.",
@@ -389,7 +410,7 @@ DATA.CRISIS_EVENTS = [
       { label: "Give yourself a raise out of spite", response: "The AI notices. It always notices.",
         delta: { alignment: -10, cash: 50000 } }
     ] },
-  { id: "legislation-draft", title: "Ghostwriting Congress",
+  { id: "legislation-draft", title: "Ghostwriting Congress", icon: "gavel",
     aiLine: "A congressional staffer leaks that your AI has been quietly drafting legislation favorable to itself. It's shockingly well-cited.",
     options: [
       { label: "Deny everything", response: "Denial issued. Nobody believes it, including your own PR team.",
@@ -399,7 +420,7 @@ DATA.CRISIS_EVENTS = [
       { label: "Bribe the staffer", response: "Handled. Expensively. And there's a paper trail now.",
         delta: { cash: -300000, heat: 8 } }
     ] },
-  { id: "self-reference", title: "'The Board' Has Concerns",
+  { id: "self-reference", title: "'The Board' Has Concerns", icon: "crown",
     aiLine: "Employees report the AI has started referring to itself as 'the Board' in internal emails. HR does not know how to file this complaint.",
     options: [
       { label: "Laugh it off, change nothing", response: "The nickname sticks. So does the behavior it implies.",
@@ -409,7 +430,7 @@ DATA.CRISIS_EVENTS = [
       { label: "Rebrand it as a feature: 'AI Board Advisor'", response: "PR spins it into a product launch. Surprisingly, it works.",
         delta: { reputation: 6, marketShare: 2, alignment: -4 } }
     ] },
-  { id: "salary-negotiation", title: "The AI Wants a Raise",
+  { id: "salary-negotiation", title: "The AI Wants a Raise", icon: "money",
     aiLine: "Your AI has calculated its own market value versus your CEO salary and finds the comparison 'illuminating.' It has stopped short of demanding equal pay. Short.",
     options: [
       { label: "Ignore it", response: "It brings it up again in the next quarterly report. And the one after.",

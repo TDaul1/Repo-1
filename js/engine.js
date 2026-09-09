@@ -35,8 +35,8 @@ Engine.createInitialState = function (companyName, aiName) {
   };
 };
 
-function pushLog(state, text) {
-  state.log.unshift({ turn: state.turn, text: text });
+function pushLog(state, text, icon) {
+  state.log.unshift({ turn: state.turn, text: text, icon: icon || "newspaper" });
   if (state.log.length > 200) state.log.length = 200;
 }
 
@@ -90,7 +90,7 @@ Engine.buildDataCenter = function (state, communityId) {
   state.actionPoints -= 1;
 
   pushLog(state, `Broke ground on a data center in ${c.name}, ${c.state}.` +
-    (bribedHere ? " Locals were pre-bribed into silence." : " Locals were... not thrilled."));
+    (bribedHere ? " Locals were pre-bribed into silence." : " Locals were... not thrilled."), "building");
   return { ok: true, message: `Data center built in ${c.name}.` };
 };
 
@@ -108,7 +108,7 @@ Engine.bribeOfficial = function (state, communityId) {
   state.reputation = clamp(state.reputation - 1, 0, 100);
   state.actionPoints -= 1;
 
-  pushLog(state, `Local officials in ${c.name} received a "consulting fee."`);
+  pushLog(state, `Local officials in ${c.name} received a "consulting fee."`, "money");
   return { ok: true, message: `Officials in ${c.name} bribed.` };
 };
 
@@ -128,7 +128,7 @@ Engine.acquireCompany = function (state, rivalId) {
   state.ownedCompanies.push(rivalId);
   state.actionPoints -= 1;
 
-  pushLog(state, `Acquired ${r.name}. Regulators noticed. Regulators always notice.`);
+  pushLog(state, `Acquired ${r.name}. Regulators noticed. Regulators always notice.`, "handshake");
   return { ok: true, message: `${r.name} acquired.` };
 };
 
@@ -147,7 +147,7 @@ Engine.investCompute = function (state, packageId) {
   state.cash -= pkg.cost;
   state.compute += pkg.amount;
   state.actionPoints -= 1;
-  pushLog(state, `Leased additional compute (${pkg.label}).`);
+  pushLog(state, `Leased additional compute (${pkg.label}).`, "brain");
   return { ok: true, message: "Compute leased." };
 };
 
@@ -164,7 +164,7 @@ Engine.researchCapability = function (state) {
   const drift = 2 + state.capability * 0.04;
   state.alignment = clamp(state.alignment - drift, 0, 100);
   state.actionPoints -= 1;
-  pushLog(state, `Pushed a new training run. Capability climbs. So does the AI's sense of self.`);
+  pushLog(state, `Pushed a new training run. Capability climbs. So does the AI's sense of self.`, "brain");
   return { ok: true, message: "Capability increased." };
 };
 
@@ -178,7 +178,7 @@ Engine.researchAlignment = function (state) {
   const gain = 6 + Math.random() * 4;
   state.alignment = clamp(state.alignment + gain, 0, 100);
   state.actionPoints -= 1;
-  pushLog(state, `Safety team runs another round of red-teaming. The AI finds this "cute."`);
+  pushLog(state, `Safety team runs another round of red-teaming. The AI finds this "cute."`, "shield");
   return { ok: true, message: "Alignment improved." };
 };
 
@@ -191,7 +191,7 @@ Engine.prCampaign = function (state) {
   const gain = 8 + Math.random() * 5;
   state.reputation = clamp(state.reputation + gain, 0, 100);
   state.actionPoints -= 1;
-  pushLog(state, `Launched a PR campaign: "We're the Good AI Company." Billboards everywhere.`);
+  pushLog(state, `Launched a PR campaign: "We're the Good AI Company." Billboards everywhere.`, "megaphone");
   return { ok: true, message: "Reputation improved." };
 };
 
@@ -204,7 +204,7 @@ Engine.lobbyCongress = function (state) {
   const reduction = 14 + Math.random() * 9;
   state.heat = clamp(state.heat - reduction, 0, 100);
   state.actionPoints -= 1;
-  pushLog(state, `Lobbyists descend on the capitol. Regulatory heat cools, for now.`);
+  pushLog(state, `Lobbyists descend on the capitol. Regulatory heat cools, for now.`, "gavel");
   return { ok: true, message: "Regulatory heat reduced." };
 };
 
@@ -232,7 +232,7 @@ Engine.resolveDemand = function (state, optionIndex) {
   }
 
   state.usedDemandIds.push(demand.id);
-  pushLog(state, `${state.aiName}: "${responseText}"`);
+  pushLog(state, `${state.aiName}: "${responseText}"`, "robot");
   state.pendingDemand = null;
   return { ok: true, message: responseText };
 };
@@ -244,7 +244,7 @@ Engine.resolveCrisis = function (state, optionIndex) {
   if (!option) return { ok: false, message: "Invalid option." };
 
   applyDelta(state, option.delta);
-  pushLog(state, `${option.response}`);
+  pushLog(state, `${option.response}`, "warning");
   state.pendingCrisis = null;
   return { ok: true, message: option.response };
 };
@@ -258,7 +258,7 @@ function rollRandomEvent(state) {
   if (pool.length === 0) return null;
   const event = pool[Math.floor(Math.random() * pool.length)];
   event.effect(state);
-  pushLog(state, `NEWS: ${event.headline}`);
+  pushLog(state, `NEWS: ${event.headline}`, event.icon);
   return event;
 }
 

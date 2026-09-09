@@ -319,6 +319,7 @@ const STAGES = [
   { fuelMax: 700, thrust: 1120, label: 'STAGE 3' },
 ];
 const MAX_SPEED = 1500;
+const MAX_TURN_RATE = 3.6; // rad/s, full rotation in ~1.75s at top rate
 
 const rocket = {
   x: 0, y: 0, // world position; y = altitude (up positive)
@@ -476,10 +477,10 @@ function altitudeBand(altitude) {
   return 'space';
 }
 
-function spawnObstacle(maxAltitudeReached) {
+function spawnObstacle(maxAltitudeReached, centerX) {
   const band = altitudeBand(maxAltitudeReached);
   const y = maxAltitudeReached + rand(H * 0.9, H * 1.6);
-  const x = rand(-W * 0.42, W * 0.42);
+  const x = centerX + rand(-W * 0.42, W * 0.42);
   let type;
   if (band === 'low') type = Math.random() < 0.7 ? 'bird' : 'balloon';
   else if (band === 'mid') type = Math.random() < 0.5 ? 'balloon' : 'debris';
@@ -495,15 +496,15 @@ function spawnObstacle(maxAltitudeReached) {
   obstacles.push(base);
 }
 
-function spawnCollectible(maxAltitudeReached) {
+function spawnCollectible(maxAltitudeReached, centerX) {
   const y = maxAltitudeReached + rand(H * 0.7, H * 1.4);
-  const x = rand(-W * 0.4, W * 0.4);
+  const x = centerX + rand(-W * 0.4, W * 0.4);
   const roll = Math.random();
   const type = roll < 0.55 ? 'fuel' : (roll < 0.85 ? 'orb' : 'boost');
   collectibles.push({ type, x, y, r: type === 'boost' ? 16 : 12, phase: rand(0, TAU) });
 }
 
-function updateObstacles(dt, camAltitude) {
+function updateObstacles(dt, camAltitude, camX) {
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
     o.phase += dt;
@@ -512,13 +513,17 @@ function updateObstacles(dt, camAltitude) {
     if (o.type === 'debris') { o.x += o.vx * dt; o.rot += o.vr * dt; }
     if (o.type === 'satellite') { o.x += o.vx * dt; o.rot += o.vr * dt; }
     if (o.type === 'meteor') { o.x += o.vx * dt; o.y += o.vy * dt; }
-    o.x = clamp(o.x, -W * 0.55, W * 0.55);
-    if (o.y < camAltitude - H) obstacles.splice(i, 1);
+    o.x = clamp(o.x, camX - W * 0.55, camX + W * 0.55);
+    if (o.y < camAltitude - H || Math.abs(o.y - camAltitude) > H * 3) obstacles.splice(i, 1);
   }
 }
 
-function updateCollectibles(dt) {
-  for (const c of collectibles) c.phase += dt;
+function updateCollectibles(dt, camAltitude) {
+  for (let i = collectibles.length - 1; i >= 0; i--) {
+    const c = collectibles[i];
+    c.phase += dt;
+    if (Math.abs(c.y - camAltitude) > H * 3) collectibles.splice(i, 1);
+  }
 }
 
 function drawWorldObjects(ctx, camX, camY, altitude) {
@@ -729,15 +734,15 @@ function updatePhysics(dt) {
 
   rocket.thrusting = Input.thrust && rocket.fuel > 0 && rocket.alive;
 
-  // steering
-  const steerRate = 2.6;
+  // steering — full 360° freedom, inertia-based (no forced return to vertical)
+  const steerRate = 4.6;
   if (Input.left) rocket.angularVel -= steerRate * dt;
   if (Input.right) rocket.angularVel += steerRate * dt;
-  if (!Input.left && !Input.right) {
-    rocket.angularVel += (-rocket.angle) * 3 * dt; // spring back to vertical
-  }
-  rocket.angularVel *= (1 - 3 * dt);
-  rocket.angle = clamp(rocket.angle + rocket.angularVel * dt, -0.62, 0.62);
+  rocket.angularVel = clamp(rocket.angularVel, -MAX_TURN_RATE, MAX_TURN_RATE);
+  rocket.angularVel *= (1 - 2.4 * dt);
+  rocket.angle += rocket.angularVel * dt;
+  if (rocket.angle > Math.PI) rocket.angle -= TAU;
+  if (rocket.angle < -Math.PI) rocket.angle += TAU;
 
   // thrust
   if (rocket.thrusting) {
@@ -780,11 +785,6 @@ function updatePhysics(dt) {
 
   rocket.x += rocket.vx * dt;
   rocket.y += rocket.vy * dt;
-
-  // soft horizontal bounds
-  const limit = W * 0.46;
-  if (rocket.x > limit) { rocket.x = limit; rocket.vx = Math.min(0, rocket.vx); }
-  if (rocket.x < -limit) { rocket.x = -limit; rocket.vx = Math.max(0, rocket.vx); }
 
   if (rocket.y < 0) { rocket.y = 0; if (rocket.vy < 0) rocket.vy = 0; }
 
@@ -865,11 +865,11 @@ function updateSpawning(dt) {
   const band = altitudeBand(maxAltitudeReached);
   const obstacleInterval = band === 'low' ? 1.1 : band === 'mid' ? 0.9 : band === 'high' ? 0.75 : 0.65;
   if (obstacleTimer <= 0) {
-    spawnObstacle(Math.max(maxAltitudeReached, rocket.y));
+    spawnObstacle(Math.max(maxAltitudeReached, rocket.y), rocket.x);
     obstacleTimer = obstacleInterval * rand(0.7, 1.3);
   }
   if (collectibleTimer <= 0) {
-    spawnCollectible(Math.max(maxAltitudeReached, rocket.y));
+    spawnCollectible(Math.max(maxAltitudeReached, rocket.y), rocket.x);
     collectibleTimer = rand(1.4, 2.6);
   }
 }
@@ -1063,8 +1063,8 @@ function frame(now) {
   if (state === 'playing') {
     updatePhysics(dt);
     checkCollisions();
-    updateObstacles(dt, rocket.y);
-    updateCollectibles(dt);
+    updateObstacles(dt, rocket.y, rocket.x);
+    updateCollectibles(dt, rocket.y);
     updateSpawning(dt);
     checkOrbit();
     updateHUD();

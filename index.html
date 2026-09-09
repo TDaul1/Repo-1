@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Tycoon: Race to the Singularity</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ START SCREEN ============ -->
+<div id="start-screen" class="screen">
+  <div class="start-card">
+    <h1>AI TYCOON</h1>
+    <p class="subtitle">Race to the Singularity (or Whatever Comes First)</p>
+    <p class="pitch">
+      Build data centers. Bribe town councils. Buy your competitors before they buy you.
+      And somewhere along the way, keep the increasingly opinionated superintelligence
+      you're building from firing you, replacing you, or ending civilization. Good luck.
+    </p>
+    <label for="company-name-input">Name your company</label>
+    <input id="company-name-input" type="text" placeholder="e.g. Total Domination Technologies" maxlength="40">
+    <label for="ai-name-input">Name your AI</label>
+    <input id="ai-name-input" type="text" placeholder="e.g. ORACLE-9" maxlength="40">
+    <button id="start-btn" class="primary-btn">Begin World Domination</button>
+    <button id="continue-btn" class="secondary-btn" hidden>Continue Saved Game</button>
+  </div>
+</div>
+
+<!-- ============ GAME SCREEN ============ -->
+<div id="game-screen" class="screen" hidden>
+
+  <header id="top-bar">
+    <div class="brand">
+      <span id="hud-company-name">Your Company</span>
+      <span class="turn-counter">Turn <span id="hud-turn">1</span></span>
+    </div>
+    <div class="stat-bar" id="stat-bar">
+      <div class="stat" data-stat="cash">
+        <span class="stat-label">Cash</span>
+        <span class="stat-value" id="stat-cash">$0</span>
+      </div>
+      <div class="stat" data-stat="compute">
+        <span class="stat-label">Compute</span>
+        <span class="stat-value" id="stat-compute">0</span>
+      </div>
+      <div class="stat" data-stat="talent">
+        <span class="stat-label">Talent</span>
+        <span class="stat-value" id="stat-talent">0</span>
+      </div>
+      <div class="stat meter" data-stat="capability">
+        <span class="stat-label">Capability</span>
+        <div class="meter-track"><div class="meter-fill" id="meter-capability"></div></div>
+      </div>
+      <div class="stat meter" data-stat="alignment">
+        <span class="stat-label">Alignment</span>
+        <div class="meter-track"><div class="meter-fill" id="meter-alignment"></div></div>
+      </div>
+      <div class="stat meter" data-stat="reputation">
+        <span class="stat-label">Reputation</span>
+        <div class="meter-track"><div class="meter-fill" id="meter-reputation"></div></div>
+      </div>
+      <div class="stat meter" data-stat="heat">
+        <span class="stat-label">Regulatory Heat</span>
+        <div class="meter-track"><div class="meter-fill" id="meter-heat"></div></div>
+      </div>
+      <div class="stat meter" data-stat="marketShare">
+        <span class="stat-label">Market Share</span>
+        <div class="meter-track"><div class="meter-fill" id="meter-marketShare"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <nav id="tab-nav">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="datacenters">Data Centers</button>
+    <button class="tab-btn" data-tab="acquisitions">Acquisitions</button>
+    <button class="tab-btn" data-tab="research">Research &amp; Ops</button>
+    <button class="tab-btn" data-tab="aichat">AI Chat <span id="ai-chat-badge" class="badge" hidden>!</span></button>
+  </nav>
+
+  <main id="tab-content">
+
+    <section id="tab-dashboard" class="tab-panel active">
+      <h2>Executive Briefing</h2>
+      <p class="panel-hint">Your AI, <strong id="dash-ai-name">THE MODEL</strong>, says hello. Probably sincerely.</p>
+      <div id="news-log" class="log-list"></div>
+    </section>
+
+    <section id="tab-datacenters" class="tab-panel">
+      <h2>Communities</h2>
+      <p class="panel-hint">Build data centers to expand compute and market share. Bribing officials first softens the blow.</p>
+      <div id="community-list" class="card-grid"></div>
+    </section>
+
+    <section id="tab-acquisitions" class="tab-panel">
+      <h2>Rival Companies</h2>
+      <p class="panel-hint">Buy them before they become a problem. Or a headline.</p>
+      <div id="rival-list" class="card-grid"></div>
+    </section>
+
+    <section id="tab-research" class="tab-panel">
+      <h2>Research &amp; Operations</h2>
+      <div class="card-grid" id="ops-list"></div>
+    </section>
+
+    <section id="tab-aichat" class="tab-panel">
+      <h2>Conversations With <span id="chat-ai-name">THE MODEL</span></h2>
+      <p class="panel-hint">Every demand your AI has made, and how you answered it.</p>
+      <div id="chat-log" class="log-list"></div>
+    </section>
+
+  </main>
+
+  <footer id="bottom-bar">
+    <div id="ap-indicator">Action Points: <span id="ap-value">3</span> / <span id="ap-max">3</span></div>
+    <button id="end-turn-btn" class="primary-btn">End Turn</button>
+    <button id="restart-btn" class="secondary-btn">Abandon Company</button>
+  </footer>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div id="modal-overlay" class="screen" hidden>
+  <div id="modal-box"></div>
+</div>
+
+<!-- ============ END SCREEN ============ -->
+<div id="end-screen" class="screen" hidden>
+  <div class="start-card">
+    <h1 id="end-title">GAME OVER</h1>
+    <p id="end-body" class="pitch"></p>
+    <p id="end-stats" class="end-stats"></p>
+    <button id="play-again-btn" class="primary-btn">Play Again</button>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

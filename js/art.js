@@ -37,28 +37,222 @@ Art.PALETTES = [
   { bg: "#1e2b3d", ring: "#7c9eff", accent: "#7c9eff", accent2: "#5170c4", sun: "#f5e6a8" }
 ];
 
+/* =======================================================================
+   TECH VALLEY — the expansion map's aerial scene: a satirical, sun-bleached
+   flat-illustration corridor. One static background scene plus a bespoke
+   flat "campus" icon per marquee location (with its own sight gag), and a
+   plain generic campus icon for the rest. Everything renders inline SVG,
+   viewBox-scaled so it drops straight into the existing marker/board sizing.
+======================================================================= */
+
+Art.VALLEY_GROUND = "#f0e6cf";
+Art.VALLEY_ROAD = "#c7bfa9";
+Art.VALLEY_ROAD_LINE = "#f2c94c";
+Art.VALLEY_LOT = "#ded4b6";
+Art.VALLEY_SCENERY = "#c9bd9a";
+Art.VALLEY_SCENERY2 = "#b9ad8a";
+
+/* Generic low-poly building silhouette used both as background scenery
+   and (seeded per id) as the marker icon for non-bespoke locations. */
+function valleyBuildingBlock(x, y, w, h, bodyFill, roofFill) {
+  return `<rect x="${x}" y="${y + h * 0.22}" width="${w}" height="${h * 0.78}" fill="${bodyFill}"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h * 0.26}" fill="${roofFill}"/>`;
+}
+
 /* ---------------------------------------------------------------------
-   Community "town seal" — a little skyline inside a crest ring.
+   Background scene — one static aerial "tech corridor" illustration.
+   Authored at 160x100 so it can stretch edge-to-edge behind the markers
+   (whose own x/y percentages are independent of this viewBox).
 --------------------------------------------------------------------- */
-Art.communityCrest = function (id, size) {
-  const rnd = mulberry32(hashStr(id));
-  const p = Art.PALETTES[Math.floor(rnd() * Art.PALETTES.length)];
-  const buildings = 4 + Math.floor(rnd() * 3);
-  const barWidth = 84 / buildings;
-  let bars = "";
-  for (let i = 0; i < buildings; i++) {
-    const h = 22 + rnd() * 42;
-    const x = 8 + i * barWidth + barWidth * 0.12;
-    const w = barWidth * 0.76;
-    const fill = i % 2 === 0 ? p.accent : p.accent2;
-    bars += `<rect x="${x.toFixed(1)}" y="${(88 - h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="1.4" fill="${fill}" />`;
-  }
-  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="crest-svg" aria-hidden="true">
-    <circle cx="50" cy="50" r="46" fill="${p.bg}" stroke="${p.ring}" stroke-width="3"/>
-    <circle cx="50" cy="27" r="8" fill="${p.sun}" opacity="0.85"/>
-    ${bars}
-    <rect x="4" y="88" width="92" height="7" fill="${p.ring}" opacity="0.9"/>
+Art.techValleyBackground = function () {
+  return `<svg viewBox="0 0 160 100" preserveAspectRatio="none" class="valley-bg-svg" aria-hidden="true">
+    <rect x="0" y="0" width="160" height="100" fill="${Art.VALLEY_GROUND}"/>
+
+    <!-- highway corridor, running the length of the valley -->
+    <polygon points="0,78 160,18 160,32 0,92" fill="${Art.VALLEY_ROAD}"/>
+    <polygon points="0,83 160,23 160,26 0,86" fill="${Art.VALLEY_ROAD_LINE}" opacity="0.75"/>
+
+    <!-- ambient low-poly scenery blocks, kept clear of marker positions -->
+    ${valleyBuildingBlock(6, 8, 10, 9, Art.VALLEY_SCENERY, Art.VALLEY_SCENERY2)}
+    ${valleyBuildingBlock(20, 4, 7, 6, Art.VALLEY_SCENERY2, Art.VALLEY_SCENERY)}
+    ${valleyBuildingBlock(118, 82, 12, 10, Art.VALLEY_SCENERY, Art.VALLEY_SCENERY2)}
+    ${valleyBuildingBlock(136, 6, 9, 8, Art.VALLEY_SCENERY2, Art.VALLEY_SCENERY)}
+    ${valleyBuildingBlock(74, 88, 8, 7, Art.VALLEY_SCENERY, Art.VALLEY_SCENERY2)}
+
+    <!-- parking lot, bottom-right, well clear of any marker -->
+    <g opacity="0.8">
+      <rect x="128" y="60" width="26" height="16" fill="${Art.VALLEY_LOT}"/>
+      <path d="M130,60 L130,76 M135,60 L135,76 M140,60 L140,76 M145,60 L145,76 M150,60 L150,76"
+        stroke="#c2b592" stroke-width="0.8"/>
+    </g>
+
+    <!-- gag 1: scooter graveyard -->
+    <g transform="translate(94,58)" opacity="0.9">
+      <circle cx="0" cy="6" r="2.1" fill="#3a3f45"/>
+      <circle cx="4" cy="7" r="2.1" fill="#3a3f45"/>
+      <circle cx="8" cy="5.5" r="2.1" fill="#3a3f45"/>
+      <path d="M0,6 L2,0 L5,0 M4,7 L6,1 L9,1 M8,5.5 L10,-0.5 L13,-0.5" stroke="#7ed957" stroke-width="0.9" fill="none"/>
+    </g>
+
+    <!-- gag 2: a building rebranding itself mid-frame -->
+    <g transform="translate(46,6)">
+      ${valleyBuildingBlock(0, 4, 12, 9, "#cfc4a2", "#a99c78")}
+      <rect x="2" y="7" width="8" height="2.6" fill="#e7e0c8"/>
+      <rect x="1.5" y="10.5" width="9" height="2.2" fill="#f2c94c"/>
+      <line x1="12" y1="13" x2="15" y2="1" stroke="#8a7f63" stroke-width="0.7"/>
+      <circle cx="15" cy="1" r="1.1" fill="#8a7f63"/>
+    </g>
+
+    <!-- gag 3: a founder biking past his own billboard -->
+    <g transform="translate(100,10)">
+      <rect x="0" y="0" width="10" height="14" fill="#d9463f"/>
+      <rect x="1" y="1" width="8" height="6" fill="#f5e6c8"/>
+      <circle cx="5" cy="3.6" r="1.6" fill="#e0a97a"/>
+      <g transform="translate(-2,16) scale(0.55)">
+        <circle cx="0" cy="6" r="3" fill="none" stroke="#2b2f36" stroke-width="1"/>
+        <circle cx="9" cy="6" r="3" fill="none" stroke="#2b2f36" stroke-width="1"/>
+        <path d="M0,6 L4,2 L9,6 M4,2 L4,6" stroke="#2b2f36" stroke-width="1" fill="none"/>
+        <circle cx="4" cy="1" r="1.1" fill="#e0a97a"/>
+      </g>
+    </g>
   </svg>`;
+};
+
+/* ---------------------------------------------------------------------
+   Per-marker state overlays (baked into the icon, not a CSS ring), plus
+   the shared wrapper every campus icon (bespoke or generic) is run through.
+--------------------------------------------------------------------- */
+function campusStateOverlay(markerState) {
+  markerState = markerState || {};
+  let pre = "", post = "";
+  if (markerState.selected) {
+    pre += `<ellipse cx="50" cy="90" rx="34" ry="7" fill="#2b2f36" opacity="0.18"/>`;
+  }
+  if (markerState.bribed) {
+    post += `<rect x="14" y="72" width="72" height="7" fill="#d9463f"/>
+      <polygon points="50,72 46,79 50,76.5 54,79" fill="#f2c94c"/>`;
+  }
+  if (markerState.built) {
+    post += `<line x1="82" y1="30" x2="82" y2="10" stroke="#5b6068" stroke-width="2"/>
+      <polygon points="82,10 82,18 94,14" fill="#7ed957"/>`;
+  }
+  return { pre: pre, post: post };
+}
+
+function campusIcon(size, innerSvg, markerState) {
+  const overlay = campusStateOverlay(markerState);
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="campus-svg" aria-hidden="true">
+    ${overlay.pre}
+    ${innerSvg}
+    ${overlay.post}
+  </svg>`;
+}
+
+/* ---------------------------------------------------------------------
+   Bespoke campus icons — one hand-drawn gag per marquee location.
+--------------------------------------------------------------------- */
+Art.CAMPUS_BUILDERS = {
+  gulch: function () { // PannerAI — rusted mining rig, crooked banner
+    return `${valleyBuildingBlock(20, 34, 60, 40, "#caa06b", "#8a6b45")}
+      <rect x="6" y="94" width="88" height="6" fill="#e3c98f"/>
+      <polygon points="10,72 16,20 22,72" fill="none" stroke="#6b4a30" stroke-width="2.4"/>
+      <line x1="8" y1="72" x2="24" y2="72" stroke="#6b4a30" stroke-width="2.4"/>
+      <g transform="rotate(-4 50 54)">
+        <rect x="26" y="48" width="48" height="10" fill="#d9463f"/>
+        <rect x="26" y="48" width="48" height="10" fill="none" stroke="#8f231e" stroke-width="1"/>
+      </g>`;
+  },
+  aquifer: function () { // AquaCortex — sprinklers, cracked lawn, water tower
+    return `<rect x="6" y="94" width="88" height="6" fill="#b9d98a"/>
+      <path d="M6,94 L20,90 L34,94 L48,89 L62,94 L76,90 L94,94" fill="none" stroke="#a08a5a" stroke-width="1.4"/>
+      ${valleyBuildingBlock(18, 36, 52, 38, "#6fb3c2", "#3d7f8f")}
+      <circle cx="82" cy="46" r="9" fill="#3d7f8f"/>
+      <line x1="78" y1="55" x2="78" y2="70" stroke="#3d7f8f" stroke-width="2"/>
+      <line x1="86" y1="55" x2="86" y2="70" stroke="#3d7f8f" stroke-width="2"/>
+      <path d="M30,86 Q34,78 38,86" fill="none" stroke="#ffffff" stroke-width="1.3" opacity="0.85"/>
+      <path d="M46,86 Q50,78 54,86" fill="none" stroke="#ffffff" stroke-width="1.3" opacity="0.85"/>`;
+  },
+  coalburg: function () { // CleanSeam Systems — smokestacks + one solar panel
+    return `${valleyBuildingBlock(18, 40, 58, 34, "#8a8f97", "#5b6068")}
+      <rect x="6" y="94" width="88" height="6" fill="#cfd3d6"/>
+      <rect x="28" y="14" width="7" height="28" fill="#5b6068"/>
+      <rect x="44" y="10" width="7" height="32" fill="#5b6068"/>
+      <ellipse cx="47.5" cy="8" rx="6" ry="3.4" fill="#c2c6ca" opacity="0.8"/>
+      <g transform="rotate(18 31 22)"><rect x="24" y="18" width="10" height="7" fill="#2b4a6b"/></g>
+      <rect x="24" y="52" width="46" height="8" fill="#f2c94c"/>`;
+  },
+  cornfield: function () { // Silo.ai — repurposed silo, spinner crop circle
+    return `<rect x="6" y="94" width="88" height="6" fill="#e8d77a"/>
+      <g opacity="0.55" fill="none" stroke="#c9b45a" stroke-width="1">
+        <circle cx="70" cy="86" r="6"/><circle cx="70" cy="86" r="10"/>
+      </g>
+      <rect x="36" y="20" width="28" height="56" rx="14" fill="#d9a441"/>
+      <ellipse cx="50" cy="20" rx="14" ry="6" fill="#b5842f"/>
+      <line x1="36" y1="34" x2="64" y2="34" stroke="#b5842f" stroke-width="1.4"/>
+      <line x1="36" y1="46" x2="64" y2="46" stroke="#b5842f" stroke-width="1.4"/>
+      <line x1="36" y1="58" x2="64" y2="58" stroke="#b5842f" stroke-width="1.4"/>`;
+  },
+  taxhaven: function () { // Nomintech Holdings — a mailbox and a folding table
+    return `<rect x="6" y="94" width="88" height="6" fill="#d8cfa8"/>
+      <rect x="40" y="66" width="20" height="2.4" fill="#cfa15a"/>
+      <line x1="42" y1="68.4" x2="42" y2="78" stroke="#cfa15a" stroke-width="2"/>
+      <line x1="58" y1="68.4" x2="58" y2="78" stroke="#cfa15a" stroke-width="2"/>
+      <rect x="44" y="60" width="12" height="6" fill="#787878"/>
+      <path d="M34,40 a10,10 0 0 1 20,0 v14 h-20 z" fill="#4a6fa5"/>
+      <rect x="30" y="54" width="28" height="4" fill="#3a5d90"/>
+      <line x1="44" y1="58" x2="44" y2="78" stroke="#3a5d90" stroke-width="2.4"/>
+      <polygon points="52,38 58,38 52,32" fill="#d9463f"/>
+      <rect x="38" y="24" width="18" height="8" fill="#ffffff" stroke="#3a5d90" stroke-width="0.8"/>`;
+  },
+  oceanpoint: function () { // KelpNet — cooling pipe into the surf, whale-lawyer boat
+    return `${valleyBuildingBlock(30, 30, 44, 32, "#4a8f8a", "#2f5f5c")}
+      <path d="M0,80 Q20,70 40,80 T80,80 T120,80 T160,80 V100 H0 Z" fill="#6fc7d9"/>
+      <rect x="50" y="58" width="6" height="26" fill="#7a8a90"/>
+      <polygon points="112,74 128,74 122,68 116,68" fill="#d94636"/>
+      <line x1="122" y1="68" x2="122" y2="60" stroke="#5b3a30" stroke-width="1.2"/>`;
+  },
+  nuketown: function () { // HalfLife Compute — faint glow, electrolyte vending machine
+    return `<circle cx="50" cy="55" r="42" fill="#a6ff5c" opacity="0.16"/>
+      <circle cx="50" cy="55" r="30" fill="#a6ff5c" opacity="0.18"/>
+      ${valleyBuildingBlock(22, 36, 52, 34, "#3a3f45", "#23262b")}
+      <rect x="6" y="94" width="88" height="6" fill="#55606b"/>
+      <rect x="78" y="58" width="12" height="20" fill="#2b6f4a"/>
+      <rect x="80" y="61" width="8" height="7" fill="#a6ff5c" opacity="0.7"/>
+      <g fill="#f2c94c" opacity="0.9">
+        <polygon points="42,42 46,49 38,49"/><polygon points="58,42 62,49 54,49"/><polygon points="50,50 54,57 46,57"/>
+      </g>`;
+  },
+  collegetown: function () { // QuadCore University Partners — protest sign vs hiring banner
+    return `<rect x="6" y="94" width="88" height="6" fill="#7fae5c"/>
+      ${valleyBuildingBlock(22, 34, 56, 36, "#a1503c", "#6b3323")}
+      <circle cx="24" cy="70" r="2.2" fill="#4a7a34"/>
+      <circle cx="21" cy="66" r="2" fill="#4a7a34"/>
+      <circle cx="26" cy="63" r="1.7" fill="#4a7a34"/>
+      <rect x="30" y="48" width="40" height="8" fill="#f2c94c"/>
+      <line x1="76" y1="80" x2="76" y2="64" stroke="#6b3323" stroke-width="1.6"/>
+      <rect x="70" y="58" width="14" height="8" fill="#e0483f"/>`;
+  }
+};
+
+/* Generic flat campus icon (non-bespoke locations): seeded palette, no
+   unique gag, but still on-brand with the rest of the valley. */
+Art.VALLEY_GENERIC_COLORS = [
+  { body: "#7c9eff", roof: "#5170c4" },
+  { body: "#ff9d6f", roof: "#c4633a" },
+  { body: "#7ed9c9", roof: "#3f9e8c" },
+  { body: "#e0b64a", roof: "#a9822f" }
+];
+
+Art.campusMarker = function (community, size, markerState) {
+  const builder = Art.CAMPUS_BUILDERS[community.id];
+  if (builder) {
+    return campusIcon(size, builder(), markerState);
+  }
+  const rnd = mulberry32(hashStr(community.id));
+  const c = Art.VALLEY_GENERIC_COLORS[Math.floor(rnd() * Art.VALLEY_GENERIC_COLORS.length)];
+  const inner = `<rect x="6" y="94" width="88" height="6" fill="${Art.VALLEY_LOT}"/>
+    ${valleyBuildingBlock(24, 34, 52, 40, c.body, c.roof)}`;
+  return campusIcon(size, inner, markerState);
 };
 
 /* ---------------------------------------------------------------------

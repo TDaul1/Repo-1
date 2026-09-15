@@ -232,20 +232,23 @@ function renderChatLog() {
 
 function renderCommunityMap() {
   const container = $("#community-map");
-  container.innerHTML = DATA.COMMUNITIES.map(c => {
+  const markers = DATA.COMMUNITIES.map(c => {
     const built = state.dataCenters.includes(c.id);
     const bribed = state.bribed.includes(c.id);
+    const selected = c.id === selectedCommunityId;
     const cls = ["map-marker"];
     if (built) cls.push("built");
     if (bribed) cls.push("bribed");
-    if (c.id === selectedCommunityId) cls.push("selected");
+    if (selected) cls.push("selected");
+    const icon = Art.campusMarker(c, 46, { built: built, bribed: bribed, selected: selected });
     return `<button class="${cls.join(" ")}" data-id="${c.id}" style="left:${c.x}%; top:${c.y}%"
-      title="${escapeHtml(c.name)}, ${escapeHtml(c.state)}">
-      <span class="map-marker-ring"></span>
-      <span class="map-marker-badge">${Art.communityCrest(c.id, 30)}</span>
-      <span class="map-marker-label">${escapeHtml(c.state)}</span>
+      title="${escapeHtml(c.campusName)} — ${escapeHtml(c.name)}, ${escapeHtml(c.state)}">
+      <span class="map-marker-badge">${icon}</span>
+      <span class="map-marker-label">${escapeHtml(c.campusName)}</span>
     </button>`;
   }).join("");
+
+  container.innerHTML = `<div class="valley-bg">${Art.techValleyBackground()}</div>${markers}`;
 
   $all(".map-marker", container).forEach(btn =>
     btn.addEventListener("click", () => selectCommunity(btn.dataset.id)));
@@ -281,8 +284,9 @@ function renderCommunityDetail() {
   }
 
   container.innerHTML = `
-    <div class="card-art">${Art.communityCrest(c.id, 84)}</div>
+    <div class="card-art">${Art.campusMarker(c, 84, { built: built, bribed: bribed, selected: true })}</div>
     <div class="card-title">${escapeHtml(c.name)}, ${escapeHtml(c.state)}</div>
+    <div class="card-sub">Home of ${escapeHtml(c.campusName)}</div>
     <div class="card-flavor">${escapeHtml(c.flavor)}</div>
     <div class="approval-row">
       <div class="approval-row-head">

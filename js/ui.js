@@ -240,7 +240,7 @@ function renderCommunityMap() {
     if (built) cls.push("built");
     if (bribed) cls.push("bribed");
     if (selected) cls.push("selected");
-    const icon = Art.campusMarker(c, 46, { built: built, bribed: bribed, selected: selected });
+    const icon = Art.campusMarker(c, 58, { built: built, bribed: bribed, selected: selected });
     return `<button class="${cls.join(" ")}" data-id="${c.id}" style="left:${c.x}%; top:${c.y}%"
       title="${escapeHtml(c.campusName)} — ${escapeHtml(c.name)}, ${escapeHtml(c.state)}">
       <span class="map-marker-badge">${icon}</span>
@@ -284,7 +284,7 @@ function renderCommunityDetail() {
   }
 
   container.innerHTML = `
-    <div class="card-art">${Art.campusMarker(c, 84, { built: built, bribed: bribed, selected: true })}</div>
+    <div class="card-art">${Art.campusMarker(c, 118, { built: built, bribed: bribed, selected: true })}</div>
     <div class="card-title">${escapeHtml(c.name)}, ${escapeHtml(c.state)}</div>
     <div class="card-sub">Home of ${escapeHtml(c.campusName)}</div>
     <div class="card-flavor">${escapeHtml(c.flavor)}</div>

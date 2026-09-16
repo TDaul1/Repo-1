@@ -131,12 +131,78 @@ function carShape(cx, cy, rot, body) {
   </g>`;
 }
 
+/* Distance from the highway centerline (y = 78 - 0.375x, from (0,78) to (160,18)). */
+function roadDistance(x, y) {
+  return Math.abs(y - (78 - 0.375 * x));
+}
+
+function nearAny(cx, cy, pts, minDist) {
+  for (let i = 0; i < pts.length; i++) {
+    const dx = cx - pts[i][0], dy = cy - pts[i][1];
+    if (Math.sqrt(dx * dx + dy * dy) < minDist) return true;
+  }
+  return false;
+}
+
+Art.VALLEY_FILLER_COLORS = [
+  { body: "#c9bd9a", roof: "#8f8567" },
+  { body: "#d8cdaa", roof: "#a89b74" },
+  { body: "#b9ae8f", roof: "#847a5c" },
+  { body: "#cfc0a0", roof: "#9c8f6c" },
+  { body: "#a7c9c2", roof: "#6f9e94" }
+];
+
+/* Fills the rest of the canvas — dozens of small buildings, trees, lots
+   and lawn patches on a jittered grid — so the map reads as one dense,
+   continuous illustrated town instead of a dozen icons floating on
+   empty ground. Deterministic (fixed seed) so it never reshuffles on
+   re-render; steers clear of the highway, the real markers (in viewBox
+   units), and the hand-placed set pieces. */
+function backgroundFiller(communities) {
+  const markerPts = (communities || []).map(c => [c.x * 1.6, c.y]);
+  const fixedExclude = [[140, 67], [100, 58], [52, 11], [105, 16]];
+  const rnd = mulberry32(hashStr("valley-filler-v2"));
+  const cols = 16, rows = 10;
+  const cellW = 160 / cols, cellH = 100 / rows;
+  let out = "";
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cx = c * cellW + cellW / 2 + (rnd() - 0.5) * cellW * 0.55;
+      const cy = r * cellH + cellH / 2 + (rnd() - 0.5) * cellH * 0.55;
+      if (cx < 3 || cx > 157 || cy < 3 || cy > 97) continue;
+      if (roadDistance(cx, cy) < 9) continue;
+      if (nearAny(cx, cy, markerPts, 11.5)) continue;
+      if (nearAny(cx, cy, fixedExclude, 10)) continue;
+      if (rnd() < 0.12) continue;
+      const roll = rnd();
+      if (roll < 0.52) {
+        const w = 6 + rnd() * 6, h = 5 + rnd() * 5;
+        const palette = Art.VALLEY_FILLER_COLORS[Math.floor(rnd() * Art.VALLEY_FILLER_COLORS.length)];
+        out += detailedBuilding(cx - w / 2, cy - h / 2, w, h, palette.body, palette.roof,
+          { rows: 1 + Math.floor(rnd() * 2), cols: 2 + Math.floor(rnd() * 2) });
+      } else if (roll < 0.72) {
+        out += treeCluster(cx, cy, 0.55 + rnd() * 0.55, "#4a7a34", "#5f9142", "#79ad58");
+      } else if (roll < 0.88) {
+        const w = 8 + rnd() * 4, h = 6 + rnd() * 3;
+        out += `<rect x="${(cx - w / 2).toFixed(1)}" y="${(cy - h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${Art.VALLEY_LOT}"/>
+          <rect x="${(cx - w / 2).toFixed(1)}" y="${(cy - h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="url(#wallShade)"/>
+          <path d="M${(cx - w / 2 + 2.5).toFixed(1)},${(cy - h / 2).toFixed(1)} v${h.toFixed(1)} M${(cx + w / 2 - 2.5).toFixed(1)},${(cy - h / 2).toFixed(1)} v${h.toFixed(1)}"
+            stroke="#c2b592" stroke-width="0.5"/>`;
+      } else {
+        const w = 7 + rnd() * 4, h = 5 + rnd() * 3;
+        out += `<rect x="${(cx - w / 2).toFixed(1)}" y="${(cy - h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="1.6" fill="#c7d9a0" opacity="0.65"/>`;
+      }
+    }
+  }
+  return out;
+}
+
 /* ---------------------------------------------------------------------
    Background scene — one static aerial "tech corridor" illustration.
    Authored at 160x100 so it can stretch edge-to-edge behind the markers
    (whose own x/y percentages are independent of this viewBox).
 --------------------------------------------------------------------- */
-Art.techValleyBackground = function () {
+Art.techValleyBackground = function (communities) {
   return `<svg viewBox="0 0 160 100" preserveAspectRatio="none" class="valley-bg-svg" aria-hidden="true">
     ${valleyDefs()}
     <radialGradient id="groundWash" cx="42%" cy="38%" r="75%">
@@ -153,7 +219,10 @@ Art.techValleyBackground = function () {
     ${carShape(96, 51, -20.5, "#4a6fa5")}
     ${carShape(126, 38.5, -20.5, "#f2c94c")}
 
-    <!-- ambient low-poly scenery: small detailed buildings + landscaping -->
+    <!-- dense filler: dozens of background buildings, trees, lots and lawns -->
+    ${backgroundFiller(communities)}
+
+    <!-- a few larger anchor buildings in the open corners -->
     ${detailedBuilding(4, 6, 11, 10, Art.VALLEY_SCENERY, Art.VALLEY_SCENERY2, { rows: 2, cols: 2 })}
     ${detailedBuilding(134, 4, 10, 9, Art.VALLEY_SCENERY2, Art.VALLEY_SCENERY, { rows: 2, cols: 2 })}
     ${detailedBuilding(122, 84, 13, 11, Art.VALLEY_SCENERY, Art.VALLEY_SCENERY2, { rows: 2, cols: 3 })}

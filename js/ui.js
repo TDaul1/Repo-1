@@ -248,7 +248,7 @@ function renderCommunityMap() {
     </button>`;
   }).join("");
 
-  container.innerHTML = `<div class="valley-bg">${Art.techValleyBackground()}</div>${markers}`;
+  container.innerHTML = `<div class="valley-bg">${Art.techValleyBackground(DATA.COMMUNITIES)}</div>${markers}`;
 
   $all(".map-marker", container).forEach(btn =>
     btn.addEventListener("click", () => selectCommunity(btn.dataset.id)));

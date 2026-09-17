@@ -156,6 +156,10 @@ button {
   background-clip: text;
   color: transparent;
 }
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
 
 /* ---------- game layout ---------- */
 .game-layout {
@@ -198,6 +202,44 @@ button {
   color: var(--text-dim);
   font-size: 0.85rem;
   margin-top: 4px;
+}
+
+.status-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.status-badge {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.extended-stats-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ext-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.ext-row b {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .stats-card {
@@ -424,6 +466,23 @@ button {
 }
 .death-summary .row b { color: var(--text); font-weight: 600; }
 
+.achievements-block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.achievements-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.achievement-item {
+  font-size: 0.85rem;
+  padding: 3px 0;
+}
+
 .epitaph {
   font-style: italic;
   color: var(--text-dim);
@@ -435,10 +494,77 @@ button {
 
 #new-life-btn { width: 100%; }
 
+/* ---------- god mode ---------- */
+.godmode-card {
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.godmode-title {
+  margin: 0 0 4px;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.godmode-subtitle {
+  margin: 0 0 18px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.godmode-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 16px;
+  margin-bottom: 18px;
+}
+
+.godmode-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.godmode-row input {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.godmode-row input:focus { outline: 2px solid var(--accent); }
+
+.godmode-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.godmode-buttons {
+  display: flex;
+  gap: 10px;
+}
+.godmode-buttons .btn-primary,
+.godmode-buttons .btn-secondary {
+  flex: 1;
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 720px) {
   .game-layout { flex-direction: column; }
   .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; }
   .portrait-card, .stats-card { flex: 1; min-width: 220px; }
   .event-log { height: 360px; }
+  .godmode-fields { grid-template-columns: 1fr; }
 }

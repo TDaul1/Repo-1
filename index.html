@@ -44,7 +44,10 @@
 <section id="game-screen" class="screen hidden">
   <header class="topbar">
     <div class="topbar-title">Lifeline</div>
-    <button type="button" id="new-life-topbar-btn" class="btn-secondary small">New Life</button>
+    <div class="topbar-actions">
+      <button type="button" id="godmode-topbar-btn" class="btn-secondary small">⚡ God Mode</button>
+      <button type="button" id="new-life-topbar-btn" class="btn-secondary small">New Life</button>
+    </div>
   </header>
 
   <div class="game-layout">
@@ -55,6 +58,7 @@
         <div id="portrait" class="portrait">🙂</div>
         <div class="char-name" id="char-name">&mdash;</div>
         <div class="char-meta" id="char-meta">&mdash;</div>
+        <div class="status-badges" id="status-badges"></div>
       </div>
 
       <div class="stats-card">
@@ -83,6 +87,8 @@
           <span class="stat-value money" id="val-money">$0</span>
         </div>
       </div>
+
+      <div class="extended-stats-card" id="extended-stats-card"></div>
     </aside>
 
     <!-- CENTER: life event log -->
@@ -102,6 +108,7 @@
       <button type="button" id="activity-relationships-btn" class="btn-secondary">❤️ Relationships</button>
       <button type="button" id="activity-crime-btn" class="btn-secondary">🕶️ Crime</button>
       <button type="button" id="activity-health-btn" class="btn-secondary">🏥 Health</button>
+      <button type="button" id="activity-hobbies-btn" class="btn-secondary">🎨 Hobbies</button>
     </div>
   </footer>
 </section>
@@ -111,6 +118,20 @@
   <div class="modal-card">
     <p class="modal-prompt" id="event-modal-prompt"></p>
     <div class="modal-choices" id="event-modal-choices"></div>
+  </div>
+</div>
+
+<!-- ============ GOD MODE MODAL ============ -->
+<div id="godmode-modal" class="modal-overlay hidden">
+  <div class="modal-card godmode-card">
+    <h2 class="godmode-title">⚡ God Mode</h2>
+    <p class="godmode-subtitle">Directly edit this character. For science.</p>
+    <div class="godmode-fields" id="godmode-fields"></div>
+    <div class="godmode-quick" id="godmode-quick"></div>
+    <div class="godmode-buttons">
+      <button type="button" id="godmode-apply-btn" class="btn-primary">Apply Changes</button>
+      <button type="button" id="godmode-close-btn" class="btn-secondary">Close</button>
+    </div>
   </div>
 </div>
 
@@ -136,9 +157,14 @@
 <script src="js/school.js"></script>
 <script src="js/career.js"></script>
 <script src="js/assets.js"></script>
+<script src="js/finance.js"></script>
 <script src="js/relationships.js"></script>
+<script src="js/family.js"></script>
+<script src="js/health.js"></script>
+<script src="js/talents.js"></script>
 <script src="js/prison.js"></script>
 <script src="js/crime.js"></script>
+<script src="js/godmode.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

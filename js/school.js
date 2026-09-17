@@ -50,6 +50,7 @@ function advanceEducation(character) {
       edu.stage = "college_grad";
       logEvent(character, age, `${character.name} graduated college with a degree in ${majorLabel(edu.major)}!`);
       character.stats.smarts = clampStat(character.stats.smarts + 8);
+      addAchievement(character, `Graduated college with a degree in ${majorLabel(edu.major)}`);
     }
   } else if (edu.stage === "grad") {
     edu.yearsInStage += 1;

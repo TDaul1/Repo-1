@@ -22,6 +22,12 @@ const JOBS = [
   { id: "cto", title: "Chief Technology Officer", category: "Tech", minEducation: "grad_grad", minSmarts: 85, minAge: 30, salary: 210000, preferredMajor: "computer_science" },
   { id: "bouncer", title: "Bouncer", category: "Service", minEducation: "none", minSmarts: 15, minAge: 21, salary: 34000 },
   { id: "bail_bondsman", title: "Bail Bondsman", category: "Legal", minEducation: "high_grad", minSmarts: 40, minAge: 25, salary: 48000 },
+  { id: "session_musician", title: "Session Musician", category: "Creative", minEducation: "none", minSmarts: 0, minAge: 16, salary: 32000, minSkill: { type: "music", value: 50 } },
+  { id: "touring_musician", title: "Touring Musician", category: "Creative", minEducation: "none", minSmarts: 0, minAge: 18, salary: 65000, minSkill: { type: "music", value: 75 } },
+  { id: "freelance_coder", title: "Freelance Coder", category: "Tech", minEducation: "none", minSmarts: 40, minAge: 16, salary: 45000, minSkill: { type: "tech", value: 50 } },
+  { id: "personal_chef", title: "Personal Chef", category: "Service", minEducation: "none", minSmarts: 20, minAge: 18, salary: 48000, minSkill: { type: "cooking", value: 45 } },
+  { id: "pro_athlete", title: "Professional Athlete", category: "Sports", minEducation: "none", minSmarts: 0, minAge: 18, salary: 120000, minSkill: { type: "sports", value: 70 } },
+  { id: "gallery_artist", title: "Gallery Artist", category: "Creative", minEducation: "none", minSmarts: 0, minAge: 18, salary: 40000, minSkill: { type: "art", value: 55 } },
 ];
 
 const EDU_RANK = { none: 0, elementary: 0, middle: 0, high: 0, dropout: 0, high_grad: 1, college: 1, dropout_college: 1, college_grad: 2, grad: 2, grad_grad: 3 };
@@ -30,6 +36,7 @@ function meetsJobRequirements(character, job) {
   const eduRank = EDU_RANK[character.education.stage] ?? 0;
   const reqRank = EDU_RANK[job.minEducation] ?? 0;
   if (job.trustSensitive && character.flags.hasRecord) return false;
+  if (job.minSkill && character.skills[job.minSkill.type] < job.minSkill.value) return false;
   return (
     character.age >= job.minAge &&
     character.stats.smarts >= job.minSmarts &&
@@ -121,6 +128,7 @@ function openJobActivity(character) {
         character.career.yearsAtJob = 0;
         character.stats.happiness = clampStat(character.stats.happiness + 8);
         logEvent(character, character.age, `${character.name} got hired as a ${job.title}!`);
+        if (job.salary >= 100000) addAchievement(character, `Landed a six-figure job: ${job.title}`);
       } else {
         character.stats.happiness = clampStat(character.stats.happiness - 3);
         logEvent(character, character.age, `${character.name} interviewed for ${job.title} but didn't get it.`);
@@ -137,8 +145,9 @@ function runCareerYear(character) {
   if (!job) return;
 
   character.career.yearsAtJob += 1;
-  character.money += job.salary;
-  logEvent(character, character.age, `${character.name} earned $${job.salary.toLocaleString()} working as a ${job.title}.`);
+  const { net, tax } = afterTax(character, job.salary);
+  character.money += net;
+  logEvent(character, character.age, `${character.name} earned $${job.salary.toLocaleString()} working as a ${job.title} ($${tax.toLocaleString()} went to taxes).`);
 
   if (character.stats.happiness < 15 && Math.random() < 0.2) {
     logEvent(character, character.age, `${character.name} was fired from the ${job.title} job for poor performance.`);

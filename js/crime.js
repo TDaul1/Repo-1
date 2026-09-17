@@ -516,6 +516,9 @@ function maybePromoteInGang(character, crime) {
   if (Math.random() < 0.12) {
     character.criminal.gang.rank = GANG_RANKS[idx + 1];
     logEvent(character, character.age, `Word gets back to the top — ${character.name} is now a ${character.criminal.gang.rank} in ${character.criminal.gang.name}.`);
+    if (character.criminal.gang.rank === "boss") {
+      addAchievement(character, `Became the boss of ${character.criminal.gang.name}`);
+    }
   }
 }
 

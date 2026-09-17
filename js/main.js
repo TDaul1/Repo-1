@@ -20,6 +20,8 @@ const els = {
   portrait: document.getElementById("portrait"),
   charName: document.getElementById("char-name"),
   charMeta: document.getElementById("char-meta"),
+  statusBadges: document.getElementById("status-badges"),
+  extendedStatsCard: document.getElementById("extended-stats-card"),
   barHealth: document.getElementById("bar-health"),
   barHappiness: document.getElementById("bar-happiness"),
   barSmarts: document.getElementById("bar-smarts"),
@@ -38,6 +40,10 @@ const els = {
   assetsActivityBtn: document.getElementById("activity-assets-btn"),
   relationshipsActivityBtn: document.getElementById("activity-relationships-btn"),
   crimeActivityBtn: document.getElementById("activity-crime-btn"),
+  hobbiesActivityBtn: document.getElementById("activity-hobbies-btn"),
+  godmodeTopbarBtn: document.getElementById("godmode-topbar-btn"),
+  godmodeApplyBtn: document.getElementById("godmode-apply-btn"),
+  godmodeCloseBtn: document.getElementById("godmode-close-btn"),
 
   eventModal: document.getElementById("event-modal"),
   eventModalPrompt: document.getElementById("event-modal-prompt"),
@@ -79,7 +85,7 @@ function renderGame() {
   els.portrait.textContent = portraitFor(character);
   els.charName.textContent = character.name;
   const jobBit = character.career.job ? ` · ${character.career.job.title}` : "";
-  const jailBit = character.jail.yearsLeft > 0 ? ` · 🔒 In Prison` : "";
+  const jailBit = character.jail.yearsLeft > 0 ? ` · 🔒 In Prison` : character.jail.isFugitive ? ` · 🏃 Fugitive` : "";
   els.charMeta.textContent = `Age ${character.age} · ${character.gender} · ${character.nationality}${jobBit}${jailBit}`;
 
   els.barHealth.style.width = s.health + "%";
@@ -92,7 +98,46 @@ function renderGame() {
   els.valLooks.textContent = s.looks;
   els.valMoney.textContent = "$" + character.money.toLocaleString();
 
+  renderStatusBadges();
+  renderExtendedStats();
   renderLog();
+}
+
+function renderStatusBadges() {
+  const badges = [];
+  if (character.married) badges.push("💍 Married");
+  if (character.pregnant) badges.push("🤰 Expecting");
+  if (character.business) badges.push(`🏢 ${character.business.name}`);
+  if (character.criminal.gang) badges.push(`🕴️ ${character.criminal.gang.rank} — ${character.criminal.gang.name}`);
+  if (character.flags.hasRecord) badges.push("📋 Criminal Record");
+  for (const t of character.talents) badges.push(`⭐ ${t}`);
+  if (character.conditions.length) {
+    badges.push(...character.conditions.map((c) => `🩺 ${c.name} (${c.severity}%)`));
+  }
+  els.statusBadges.innerHTML = "";
+  for (const b of badges) {
+    const span = document.createElement("span");
+    span.className = "status-badge";
+    span.textContent = b;
+    els.statusBadges.appendChild(span);
+  }
+}
+
+function renderExtendedStats() {
+  const s = character.stats;
+  const rows = [
+    ["🧘 Mental Health", s.mentalHealth],
+    ["😰 Stress", s.stress],
+    ["🎯 Discipline", s.discipline],
+    ["🏃 Athleticism", s.athleticism],
+    ["🗣️ Social", s.socialSkill],
+    ["🏛️ Reputation", character.reputation],
+    ["⚖️ Morality", character.morality],
+    ["🌟 Fame", character.fame],
+  ];
+  els.extendedStatsCard.innerHTML = rows
+    .map(([label, val]) => `<div class="ext-row"><span>${label}</span><b>${val}</b></div>`)
+    .join("");
 }
 
 let renderedLogCount = 0;
@@ -150,6 +195,14 @@ function ageUp() {
   character.age += 1;
   applyAgingDrift(character);
 
+  // Universal systems that keep running no matter what's happening to
+  // the player this year (locked up, on the run, or free).
+  tickConditions(character);
+  tickFamily(character);
+  tickEconomy(character);
+  tickInvestments(character);
+  tickBusiness(character);
+
   if (character.jail.yearsLeft > 0) {
     character.jail.yearsLeft -= 1;
     character.jail.behaviorScore = clampStat(character.jail.behaviorScore + randInt(-2, 2));
@@ -172,14 +225,12 @@ function ageUp() {
     runFugitiveYear(character);
     // A fugitive still lives a (tense) year — random events still fire —
     // but can't hold a job or advance school while on the run.
-    decayRelationships(character);
     runYearEvents();
     return;
   }
 
   advanceEducation(character);
   runCareerYear(character);
-  decayRelationships(character);
   runYearEvents();
 }
 
@@ -226,7 +277,7 @@ function advanceEventQueue() {
 // death check against the character's final stats for this age.
 function finalizeYear() {
   if (!character.alive) return;
-  const risk = deathChance(character.age, character.stats.health);
+  const risk = deathChance(character.age, character.stats.health, character);
   if (Math.random() < risk) {
     killCharacter();
   }
@@ -257,45 +308,9 @@ function closeChoiceModal() {
   els.eventModal.classList.add("hidden");
 }
 
-// ---------- Mind & Body activity (player-initiated, doesn't advance age) ----------
-function openHealthActivity() {
-  if (!character || !character.alive) return;
-  openChoiceModal(
-    "Mind & Body — what would you like to do?",
-    [
-      { label: "Hit the gym", action: "gym" },
-      { label: "Meditate", action: "meditate" },
-      { label: "See a doctor ($100)", action: "doctor" },
-      { label: "Never mind", action: "cancel" },
-    ],
-    (choice) => {
-      const s = character.stats;
-      if (choice.action === "gym") {
-        s.health = clampStat(s.health + randInt(3, 7));
-        s.looks = clampStat(s.looks + randInt(0, 2));
-        logEvent(character, character.age, `${character.name} hit the gym and felt great.`);
-      } else if (choice.action === "meditate") {
-        s.happiness = clampStat(s.happiness + randInt(3, 6));
-        logEvent(character, character.age, `${character.name} took time to meditate and unwind.`);
-      } else if (choice.action === "doctor") {
-        if (character.money >= 100) {
-          character.money -= 100;
-          s.health = clampStat(s.health + randInt(6, 12));
-          logEvent(character, character.age, `${character.name} visited the doctor for a checkup.`);
-        } else {
-          logEvent(character, character.age, `${character.name} couldn't afford a doctor's visit.`);
-        }
-      } else {
-        return; // cancelled, nothing changes
-      }
-      renderGame();
-    }
-  );
-}
-
 function killCharacter() {
   character.alive = false;
-  const cause = causeOfDeath(character.age, character.stats.health);
+  const cause = causeOfDeath(character.age, character.stats.health, character);
   logEvent(character, character.age, `${character.name} died at age ${character.age} from ${cause}.`, "death");
   renderGame();
   showDeathScreen(cause);
@@ -326,6 +341,23 @@ function showDeathScreen(cause) {
     criminalRow = `<div class="row"><span>Criminal record</span><b>${bits.join(", ")}</b></div>`;
   }
 
+  const survivedBy = character.relationships.filter((r) => r.alive && (r.type === "Spouse" || r.type === "Child"));
+  const familyRow = survivedBy.length
+    ? `<div class="row"><span>Survived by</span><b>${survivedBy.map((r) => `${r.name} (${r.type})`).join(", ")}</b></div>`
+    : "";
+
+  const talentsRow = character.talents.length
+    ? `<div class="row"><span>Talents</span><b>${character.talents.join(", ")}</b></div>`
+    : "";
+
+  const fameRow = character.fame >= 20 ? `<div class="row"><span>Fame</span><b>${character.fame}/100</b></div>` : "";
+
+  const achievementsBlock = character.achievements.length
+    ? `<div class="achievements-block"><div class="achievements-title">Life Achievements</div>${character.achievements
+        .map((a) => `<div class="achievement-item">🏆 ${a}</div>`)
+        .join("")}</div>`
+    : "";
+
   els.deathSummary.innerHTML = `
     <div class="row"><span>Age at death</span><b>${character.age}</b></div>
     <div class="row"><span>Nationality</span><b>${character.nationality}</b></div>
@@ -334,7 +366,11 @@ function showDeathScreen(cause) {
     <div class="row"><span>Net worth</span><b>$${netWorth(character).toLocaleString()}</b></div>
     <div class="row"><span>Final health</span><b>${character.stats.health}</b></div>
     <div class="row"><span>Final happiness</span><b>${character.stats.happiness}</b></div>
+    ${familyRow}
+    ${talentsRow}
+    ${fameRow}
     ${criminalRow}
+    ${achievementsBlock}
   `;
   els.deathEpitaph.textContent = epitaphFor(character);
 
@@ -360,12 +396,16 @@ els.newLifeTopbarBtn.addEventListener("click", () => {
     resetToCreateScreen();
   }
 });
-els.healthActivityBtn.addEventListener("click", openHealthActivity);
+els.healthActivityBtn.addEventListener("click", () => openHealthActivity(character));
 els.schoolActivityBtn.addEventListener("click", () => openSchoolActivity(character));
 els.jobActivityBtn.addEventListener("click", () => openJobActivity(character));
 els.assetsActivityBtn.addEventListener("click", () => openAssetsActivity(character));
 els.relationshipsActivityBtn.addEventListener("click", () => openRelationshipsActivity(character));
 els.crimeActivityBtn.addEventListener("click", () => openCrimeActivity(character));
+els.hobbiesActivityBtn.addEventListener("click", () => openHobbiesActivity(character));
+els.godmodeTopbarBtn.addEventListener("click", () => openGodMode(character));
+els.godmodeApplyBtn.addEventListener("click", () => applyGodMode(character));
+els.godmodeCloseBtn.addEventListener("click", closeGodMode);
 
 // ---------- init ----------
 populateNationalitySelect();

@@ -21,23 +21,9 @@ const HOUSES_FOR_SALE = [
   { id: "treehouse", name: "Adult-Sized Treehouse", price: 30000, happiness: 14, looks: -2 },
 ];
 
-function openAssetsActivity(character) {
-  if (!character || !character.alive) return;
-
-  const owned = character.assets;
-  const topChoices = [
-    { label: "Browse cars", action: "cars" },
-    { label: "Browse houses", action: "houses" },
-    ...(owned.length ? [{ label: "Sell something", action: "sell" }] : []),
-    { label: "Never mind", action: "cancel" },
-  ];
-
-  openChoiceModal(`You have $${character.money.toLocaleString()}. What are you shopping for?`, topChoices, (choice) => {
-    if (choice.action === "cars") openShopFor(character, CARS_FOR_SALE, "car", "🚗");
-    else if (choice.action === "houses") openShopFor(character, HOUSES_FOR_SALE, "house", "🏠");
-    else if (choice.action === "sell") openSellMenu(character);
-  });
-}
+// openAssetsActivity itself now lives in finance.js, which adds
+// Investments and Business alongside cars/houses and delegates back to
+// openShopFor/openSellMenu below for the car/house flows.
 
 function openShopFor(character, catalog, kind, icon) {
   openChoiceModal(
@@ -63,6 +49,7 @@ function openShopFor(character, catalog, kind, icon) {
       character.stats.happiness = clampStat(character.stats.happiness + item.happiness);
       character.stats.looks = clampStat(character.stats.looks + item.looks);
       logEvent(character, character.age, `${character.name} bought a ${item.name}!`);
+      if (item.price >= 500000) addAchievement(character, `Bought a ${item.name}`);
       renderGame();
     }
   );

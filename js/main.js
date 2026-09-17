@@ -1,8 +1,10 @@
 // App controller: screen switching, character creation, the age-up loop,
-// and rendering. Phase 1 scope: no event engine yet — aging just applies
-// stat drift and rolls the death curve.
+// and rendering. Age-up runs the event engine (engine.js/events.js):
+// 0-3 events fire per year, interactive ones are presented as a choice
+// modal one at a time before the year finalizes and the death roll runs.
 
 let character = null;
+let eventQueue = [];
 
 const els = {
   createScreen: document.getElementById("create-screen"),
@@ -30,6 +32,11 @@ const els = {
   eventLog: document.getElementById("event-log"),
   ageUpBtn: document.getElementById("age-up-btn"),
   newLifeTopbarBtn: document.getElementById("new-life-topbar-btn"),
+  healthActivityBtn: document.getElementById("activity-health-btn"),
+
+  eventModal: document.getElementById("event-modal"),
+  eventModalPrompt: document.getElementById("event-modal-prompt"),
+  eventModalChoices: document.getElementById("event-modal-choices"),
 
   deathTitle: document.getElementById("death-title"),
   deathCause: document.getElementById("death-cause"),
@@ -135,14 +142,110 @@ function ageUp() {
   character.age += 1;
   applyAgingDrift(character);
 
+  const events = selectEventsForYear(character, EVENTS);
+  const interactive = events.filter((e) => e.choices && e.choices.length);
+  const auto = events.filter((e) => !e.choices || !e.choices.length);
+
+  for (const event of auto) resolveAutoEvent(character, event);
+
+  if (interactive.length === 0) {
+    if (auto.length === 0) {
+      logEvent(character, character.age, `${character.name} turned ${character.age}.`);
+    }
+    renderGame();
+    finalizeYear();
+  } else {
+    eventQueue = interactive;
+    els.ageUpBtn.disabled = true;
+    renderGame();
+    advanceEventQueue();
+  }
+}
+
+function advanceEventQueue() {
+  if (eventQueue.length === 0) {
+    els.ageUpBtn.disabled = false;
+    finalizeYear();
+    return;
+  }
+  const event = eventQueue.shift();
+  openChoiceModal(event.prompt, event.choices, (choice) => {
+    const outcome = rollOutcome(choice.outcomes);
+    applyOutcome(character, event, outcome);
+    renderGame();
+    advanceEventQueue();
+  });
+}
+
+// Resolved once the year's events (if any) are all settled: rolls the
+// death check against the character's final stats for this age.
+function finalizeYear() {
+  if (!character.alive) return;
   const risk = deathChance(character.age, character.stats.health);
   if (Math.random() < risk) {
     killCharacter();
-    return;
   }
+}
 
-  logEvent(character, character.age, `${character.name} turned ${character.age}.`);
-  renderGame();
+// Generic modal: shared by random life events and player-initiated
+// activities. `choices` is [{ label, ...anything }]; the full choice
+// object is handed back to onChoose so callers can carry their own data
+// (outcomes for events, an action tag for activities).
+function openChoiceModal(prompt, choices, onChoose) {
+  els.eventModalPrompt.textContent = prompt;
+  els.eventModalChoices.innerHTML = "";
+  for (const choice of choices) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "choice-btn";
+    btn.textContent = choice.label;
+    btn.addEventListener("click", () => {
+      closeChoiceModal();
+      onChoose(choice);
+    });
+    els.eventModalChoices.appendChild(btn);
+  }
+  els.eventModal.classList.remove("hidden");
+}
+
+function closeChoiceModal() {
+  els.eventModal.classList.add("hidden");
+}
+
+// ---------- Mind & Body activity (player-initiated, doesn't advance age) ----------
+function openHealthActivity() {
+  if (!character || !character.alive) return;
+  openChoiceModal(
+    "Mind & Body — what would you like to do?",
+    [
+      { label: "Hit the gym", action: "gym" },
+      { label: "Meditate", action: "meditate" },
+      { label: "See a doctor ($100)", action: "doctor" },
+      { label: "Never mind", action: "cancel" },
+    ],
+    (choice) => {
+      const s = character.stats;
+      if (choice.action === "gym") {
+        s.health = clampStat(s.health + randInt(3, 7));
+        s.looks = clampStat(s.looks + randInt(0, 2));
+        logEvent(character, character.age, `${character.name} hit the gym and felt great.`);
+      } else if (choice.action === "meditate") {
+        s.happiness = clampStat(s.happiness + randInt(3, 6));
+        logEvent(character, character.age, `${character.name} took time to meditate and unwind.`);
+      } else if (choice.action === "doctor") {
+        if (character.money >= 100) {
+          character.money -= 100;
+          s.health = clampStat(s.health + randInt(6, 12));
+          logEvent(character, character.age, `${character.name} visited the doctor for a checkup.`);
+        } else {
+          logEvent(character, character.age, `${character.name} couldn't afford a doctor's visit.`);
+        }
+      } else {
+        return; // cancelled, nothing changes
+      }
+      renderGame();
+    }
+  );
 }
 
 function killCharacter() {
@@ -188,6 +291,7 @@ els.newLifeTopbarBtn.addEventListener("click", () => {
     resetToCreateScreen();
   }
 });
+els.healthActivityBtn.addEventListener("click", openHealthActivity);
 
 // ---------- init ----------
 populateNationalitySelect();

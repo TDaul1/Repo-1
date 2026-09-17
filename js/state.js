@@ -25,7 +25,11 @@ function createCharacter({ name, nationality, gender }) {
     },
     money: randInt(0, 200), // birth gifts / allowance
     relationships: [], // populated in a later phase
-    flags: {},
+    flags: {
+      hasSibling: Math.random() < 0.6,
+    },
+    triggeredEventIds: new Set(), // non-repeatable events already used
+    scheduledEvents: [], // [{ eventId, age }] follow-ups queued by earlier choices
     log: [], // { age, text, kind }
   };
 }

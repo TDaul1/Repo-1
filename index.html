@@ -101,10 +101,18 @@
       <button type="button" class="btn-secondary" disabled title="Coming soon">🏠 Assets</button>
       <button type="button" class="btn-secondary" disabled title="Coming soon">❤️ Relationships</button>
       <button type="button" class="btn-secondary" disabled title="Coming soon">🕶️ Crime</button>
-      <button type="button" class="btn-secondary" disabled title="Coming soon">🏥 Health</button>
+      <button type="button" id="activity-health-btn" class="btn-secondary">🏥 Health</button>
     </div>
   </footer>
 </section>
+
+<!-- ============ EVENT / ACTIVITY CHOICE MODAL ============ -->
+<div id="event-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <p class="modal-prompt" id="event-modal-prompt"></p>
+    <div class="modal-choices" id="event-modal-choices"></div>
+  </div>
+</div>
 
 <!-- ============ DEATH SCREEN ============ -->
 <section id="death-screen" class="screen hidden">
@@ -123,6 +131,8 @@
 
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>
+<script src="js/events.js"></script>
+<script src="js/engine.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

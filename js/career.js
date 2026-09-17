@@ -58,6 +58,11 @@ function openJobActivity(character) {
     return;
   }
 
+  if (character.politics && character.politics.currentOffice) {
+    openPoliticsMenu(character);
+    return;
+  }
+
   if (character.career.job) {
     const job = character.career.job;
     openChoiceModal(
@@ -99,7 +104,9 @@ function openJobActivity(character) {
   }
 
   const listings = JOBS.filter((j) => meetsJobRequirements(character, j));
-  if (listings.length === 0) {
+  const canConsiderPolitics = character.age >= 25;
+
+  if (listings.length === 0 && !canConsiderPolitics) {
     logEvent(character, character.age, `${character.name} checked job listings but doesn't qualify for anything yet.`);
     renderGame();
     return;
@@ -113,9 +120,14 @@ function openJobActivity(character) {
         action: "apply",
         job: j,
       })),
+      ...(canConsiderPolitics ? [{ label: "🗳️ Political office", action: "politics" }] : []),
       { label: "Not right now", action: "cancel" },
     ],
     (choice) => {
+      if (choice.action === "politics") {
+        openPoliticsMenu(character);
+        return;
+      }
       if (choice.action !== "apply") return;
       const job = choice.job;
       let chance = 0.4 + (character.stats.smarts - job.minSmarts) / 200 + character.stats.looks / 400;
@@ -148,6 +160,10 @@ function runCareerYear(character) {
   const { net, tax } = afterTax(character, job.salary);
   character.money += net;
   logEvent(character, character.age, `${character.name} earned $${job.salary.toLocaleString()} working as a ${job.title} ($${tax.toLocaleString()} went to taxes).`);
+
+  // Political office has its own term/re-election logic (politics.js) —
+  // no generic firing or salary-bump promotion here.
+  if (job.category === "Politics") return;
 
   if (character.stats.happiness < 15 && Math.random() < 0.2) {
     logEvent(character, character.age, `${character.name} was fired from the ${job.title} job for poor performance.`);

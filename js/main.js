@@ -185,6 +185,10 @@ function renderStatusBadges() {
   if (character.pregnant) badges.push("🤰 Expecting");
   if (character.business) badges.push(`🏢 ${character.business.name}`);
   if (character.criminal.gang) badges.push(`🕴️ ${character.criminal.gang.rank} — ${character.criminal.gang.name}`);
+  if (character.politics && character.politics.currentOffice) {
+    const office = POLITICAL_OFFICES.find((o) => o.id === character.politics.currentOffice);
+    if (office) badges.push(`🗳️ ${office.title}`);
+  }
   if (character.flags.hasRecord) badges.push("📋 Criminal Record");
   for (const t of character.talents) badges.push(`⭐ ${t}`);
   if (character.conditions.length) {
@@ -309,6 +313,7 @@ function ageUp() {
 
   advanceEducation(character);
   runCareerYear(character);
+  runPoliticsYear(character);
   runYearEvents();
 }
 

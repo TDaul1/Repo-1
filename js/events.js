@@ -2235,4 +2235,75 @@ const EVENTS = [
       },
     ],
   },
+
+  // ---------------- Political life ----------------
+  {
+    id: "politics_press_gotcha",
+    minAge: 25,
+    maxAge: 99,
+    weight: 3,
+    repeatable: true,
+    requires: (c) => c.politics && !!c.politics.currentOffice,
+    prompt: "A reporter corners you with a tough, unscripted question at a press event.",
+    choices: [
+      {
+        label: "Answer honestly, even if it's unpopular",
+        outcomes: [
+          { chance: 0.5, text: "The honesty actually plays well with voters.", deltas: { reputation: 8, morality: 5 } },
+          { chance: 0.5, text: "It's an unpopular answer and the coverage is rough for a few days.", deltas: { reputation: -6 } },
+        ],
+      },
+      {
+        label: "Deflect with a rehearsed non-answer",
+        outcomes: [
+          { chance: 0.5, text: "It works — nobody remembers the exchange by tomorrow.", deltas: {} },
+          { chance: 0.5, text: "The dodge itself becomes the story.", deltas: { reputation: -8, morality: -3 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "politics_endorsement_offer",
+    minAge: 25,
+    maxAge: 99,
+    weight: 2,
+    repeatable: true,
+    requires: (c) => c.politics && !!c.politics.currentOffice,
+    prompt: "A wealthy donor offers a large campaign contribution — with some clear strings attached.",
+    choices: [
+      {
+        label: "Take the money",
+        outcomes: [{ chance: 1, text: "The campaign fund grows. So does the sense that you owe someone.", deltas: { money: randInt(5000, 20000), morality: -10 } }],
+      },
+      {
+        label: "Turn it down",
+        outcomes: [{ chance: 1, text: "You stay clean, even if it costs you some funding.", deltas: { morality: 8, reputation: 3 } }],
+      },
+    ],
+  },
+  {
+    id: "politics_rival_smear",
+    minAge: 25,
+    maxAge: 99,
+    weight: 2,
+    repeatable: true,
+    requires: (c) => c.politics && !!c.politics.currentOffice,
+    prompt: "A political rival launches a smear campaign against you.",
+    choices: [
+      {
+        label: "Fight back publicly",
+        outcomes: [
+          { chance: 0.5, text: "You come out on top of the exchange.", deltas: { reputation: 6 } },
+          { chance: 0.5, text: "It turns into an ugly, drawn-out mess that hurts you both.", deltas: { reputation: -8, stress: 10 } },
+        ],
+      },
+      {
+        label: "Take the high road and ignore it",
+        outcomes: [
+          { chance: 0.6, text: "It fizzles without your attention feeding it.", deltas: { reputation: 3 } },
+          { chance: 0.4, text: "Ignoring it lets the narrative take hold unchallenged.", deltas: { reputation: -5 } },
+        ],
+      },
+    ],
+  },
 ];

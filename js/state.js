@@ -97,6 +97,7 @@ function createCharacter({ name, nationality, gender }) {
       economyYearsLeft: randInt(3, 8),
     },
 
+    politics: { currentOffice: null, yearsInOffice: 0, history: [], scandals: 0 },
     achievements: [], // notable life milestones, surfaced on the death screen
     flags: {
       hasSibling: Math.random() < 0.6,

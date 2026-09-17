@@ -37,7 +37,21 @@ function createCharacter({ name, nationality, gender }) {
       yearsAtJob: 0,
     },
     assets: [], // [{ id, kind: 'car'|'house', name, value, icon }]
-    jail: { yearsLeft: 0 },
+    criminal: {
+      heat: 0, // 0-100, passive law-enforcement attention; raises catch odds on every crime
+      timesArrested: 0,
+      timesEscaped: 0,
+      gang: null, // { name, rank: 'prospect'|'associate'|'soldier'|'capo'|'boss', loyalty } once recruited
+    },
+    jail: {
+      yearsLeft: 0,
+      totalSentence: 0,
+      behaviorScore: 50, // 0-100, built up in prison.js; feeds parole odds
+      crimeLabel: null, // flavor: what put them away
+      prisonName: null, // assigned on first incarceration
+      gangAffiliated: false, // joined a prison gang for protection this stint
+      isFugitive: false, // true after a successful escape — recapture is rolled each age-up
+    },
     flags: {
       hasSibling: Math.random() < 0.6,
     },

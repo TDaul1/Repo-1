@@ -13,13 +13,15 @@ const JOBS = [
   { id: "accountant", title: "Accountant", category: "Business", minEducation: "college_grad", minSmarts: 55, minAge: 22, salary: 55000, preferredMajor: "business" },
   { id: "software_dev", title: "Software Developer", category: "Tech", minEducation: "college_grad", minSmarts: 70, minAge: 22, salary: 78000, preferredMajor: "computer_science" },
   { id: "civil_engineer", title: "Civil Engineer", category: "Engineering", minEducation: "college_grad", minSmarts: 68, minAge: 22, salary: 72000, preferredMajor: "engineering" },
-  { id: "teacher", title: "Teacher", category: "Education", minEducation: "college_grad", minSmarts: 55, minAge: 22, salary: 46000, preferredMajor: "education" },
-  { id: "nurse", title: "Nurse", category: "Medical", minEducation: "college_grad", minSmarts: 60, minAge: 22, salary: 61000, preferredMajor: "biology" },
+  { id: "teacher", title: "Teacher", category: "Education", minEducation: "college_grad", minSmarts: 55, minAge: 22, salary: 46000, preferredMajor: "education", trustSensitive: true },
+  { id: "nurse", title: "Nurse", category: "Medical", minEducation: "college_grad", minSmarts: 60, minAge: 22, salary: 61000, preferredMajor: "biology", trustSensitive: true },
   { id: "art_director", title: "Art Director", category: "Creative", minEducation: "college_grad", minSmarts: 40, minAge: 22, salary: 58000, preferredMajor: "art" },
   { id: "professional_taste_tester", title: "Professional Nacho Taste-Tester", category: "Absurd", minEducation: "college_grad", minSmarts: 20, minAge: 22, salary: 39000, preferredMajor: "culinary" },
-  { id: "lawyer", title: "Lawyer", category: "Legal", minEducation: "grad_grad", minSmarts: 80, minAge: 25, salary: 98000, preferredMajor: "law_prelaw" },
-  { id: "doctor", title: "Doctor", category: "Medical", minEducation: "grad_grad", minSmarts: 85, minAge: 26, salary: 155000, preferredMajor: "biology" },
+  { id: "lawyer", title: "Lawyer", category: "Legal", minEducation: "grad_grad", minSmarts: 80, minAge: 25, salary: 98000, preferredMajor: "law_prelaw", trustSensitive: true },
+  { id: "doctor", title: "Doctor", category: "Medical", minEducation: "grad_grad", minSmarts: 85, minAge: 26, salary: 155000, preferredMajor: "biology", trustSensitive: true },
   { id: "cto", title: "Chief Technology Officer", category: "Tech", minEducation: "grad_grad", minSmarts: 85, minAge: 30, salary: 210000, preferredMajor: "computer_science" },
+  { id: "bouncer", title: "Bouncer", category: "Service", minEducation: "none", minSmarts: 15, minAge: 21, salary: 34000 },
+  { id: "bail_bondsman", title: "Bail Bondsman", category: "Legal", minEducation: "high_grad", minSmarts: 40, minAge: 25, salary: 48000 },
 ];
 
 const EDU_RANK = { none: 0, elementary: 0, middle: 0, high: 0, dropout: 0, high_grad: 1, college: 1, dropout_college: 1, college_grad: 2, grad: 2, grad_grad: 3 };
@@ -27,6 +29,7 @@ const EDU_RANK = { none: 0, elementary: 0, middle: 0, high: 0, dropout: 0, high_
 function meetsJobRequirements(character, job) {
   const eduRank = EDU_RANK[character.education.stage] ?? 0;
   const reqRank = EDU_RANK[job.minEducation] ?? 0;
+  if (job.trustSensitive && character.flags.hasRecord) return false;
   return (
     character.age >= job.minAge &&
     character.stats.smarts >= job.minSmarts &&
@@ -39,6 +42,11 @@ function openJobActivity(character) {
 
   if (character.jail.yearsLeft > 0) {
     logEvent(character, character.age, `${character.name} can't exactly job-hunt from behind bars.`);
+    renderGame();
+    return;
+  }
+  if (character.jail.isFugitive) {
+    logEvent(character, character.age, `${character.name} can't exactly put "current fugitive" on a résumé.`);
     renderGame();
     return;
   }
@@ -105,6 +113,7 @@ function openJobActivity(character) {
       const job = choice.job;
       let chance = 0.4 + (character.stats.smarts - job.minSmarts) / 200 + character.stats.looks / 400;
       if (job.preferredMajor && character.education.major === job.preferredMajor) chance += 0.2;
+      if (character.flags.hasRecord) chance -= 0.15;
       chance = Math.max(0.1, Math.min(0.95, chance));
 
       if (Math.random() < chance) {

@@ -152,24 +152,41 @@ function ageUp() {
 
   if (character.jail.yearsLeft > 0) {
     character.jail.yearsLeft -= 1;
+    character.jail.behaviorScore = clampStat(character.jail.behaviorScore + randInt(-2, 2));
     character.stats.happiness = clampStat(character.stats.happiness - randInt(2, 6));
     character.stats.health = clampStat(character.stats.health - randInt(0, 3));
-    logEvent(
-      character,
-      character.age,
-      character.jail.yearsLeft > 0
-        ? `${character.name} spent another year behind bars. ${character.jail.yearsLeft} year(s) left.`
-        : `${character.name} served the remainder of their sentence and was released.`
-    );
+    if (character.jail.yearsLeft > 0) {
+      logEvent(character, character.age, `${character.name} spent another year at ${character.jail.prisonName || "the state pen"}. ${character.jail.yearsLeft} year(s) left.`);
+    } else {
+      logEvent(character, character.age, `${character.name} served out the remainder of the sentence and was released.`);
+      character.jail.gangAffiliated = false;
+      character.jail.prisonName = null;
+      character.jail.crimeLabel = null;
+    }
     renderGame();
     finalizeYear();
+    return;
+  }
+
+  if (character.jail.isFugitive) {
+    runFugitiveYear(character);
+    // A fugitive still lives a (tense) year — random events still fire —
+    // but can't hold a job or advance school while on the run.
+    decayRelationships(character);
+    runYearEvents();
     return;
   }
 
   advanceEducation(character);
   runCareerYear(character);
   decayRelationships(character);
+  runYearEvents();
+}
 
+// Shared tail for a "normal" year: rolls the event pool, resolves any
+// flavor (no-choice) events immediately, and queues interactive ones as
+// choice modals before finalizing (death roll).
+function runYearEvents() {
   const events = selectEventsForYear(character, EVENTS);
   const interactive = events.filter((e) => e.choices && e.choices.length);
   const auto = events.filter((e) => !e.choices || !e.choices.length);
@@ -297,6 +314,18 @@ function showDeathScreen(cause) {
   };
   const eduLine = eduLabels[character.education.stage] || character.education.stage;
 
+  const crim = character.criminal;
+  let criminalRow = "";
+  if (crim.timesArrested > 0 || crim.gang) {
+    const bits = [];
+    if (crim.timesArrested > 0) bits.push(`arrested ${crim.timesArrested}x`);
+    if (crim.timesEscaped > 0) bits.push(`escaped custody ${crim.timesEscaped}x`);
+    if (crim.gang) bits.push(`${crim.gang.rank} in ${crim.gang.name}`);
+    if (character.jail.isFugitive) bits.push("died a fugitive");
+    else if (character.jail.yearsLeft > 0) bits.push(`died mid-sentence at ${character.jail.prisonName}`);
+    criminalRow = `<div class="row"><span>Criminal record</span><b>${bits.join(", ")}</b></div>`;
+  }
+
   els.deathSummary.innerHTML = `
     <div class="row"><span>Age at death</span><b>${character.age}</b></div>
     <div class="row"><span>Nationality</span><b>${character.nationality}</b></div>
@@ -305,6 +334,7 @@ function showDeathScreen(cause) {
     <div class="row"><span>Net worth</span><b>$${netWorth(character).toLocaleString()}</b></div>
     <div class="row"><span>Final health</span><b>${character.stats.health}</b></div>
     <div class="row"><span>Final happiness</span><b>${character.stats.happiness}</b></div>
+    ${criminalRow}
   `;
   els.deathEpitaph.textContent = epitaphFor(character);
 

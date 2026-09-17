@@ -1002,4 +1002,150 @@ const EVENTS = [
       },
     ],
   },
+
+  // ---------------------------------------------------------------
+  // Criminal-life events — only surface for characters with a gang
+  // affiliation, a criminal record, or heat on them, tying the random
+  // event pool back into the crime system (crime.js/prison.js).
+  // ---------------------------------------------------------------
+
+  {
+    id: "gang_rival_confrontation",
+    minAge: 18,
+    maxAge: 75,
+    weight: 3,
+    repeatable: true,
+    requires: (c) => !!c.criminal.gang,
+    prompt: "A rival crew corners you outside your usual spot. This could go badly.",
+    choices: [
+      {
+        label: "Stand your ground",
+        outcomes: [
+          { chance: 0.5, text: "You hold your own and they back off. Word gets around.", deltas: { happiness: 6, heat: 5 } },
+          { chance: 0.5, text: "It turns into a brawl and you come out worse for it.", deltas: { health: -18, happiness: -6, heat: 8 } },
+        ],
+      },
+      {
+        label: "Talk your way out",
+        outcomes: [
+          { chance: 0.5, text: "You keep it cool and defuse the situation entirely.", deltas: { smarts: 1 } },
+          { chance: 0.5, text: "They don't buy it. You get shoved around a little before it's over.", deltas: { health: -8, happiness: -4 } },
+        ],
+      },
+      {
+        label: "Run",
+        outcomes: [
+          { chance: 0.7, text: "You get out of there before it escalates.", deltas: { happiness: -2 } },
+          { chance: 0.3, text: "They catch you two blocks down.", deltas: { health: -12, happiness: -6 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "heat_detective_snooping",
+    minAge: 18,
+    maxAge: 90,
+    weight: 3,
+    repeatable: true,
+    requires: (c) => c.criminal.heat >= 50,
+    prompt: "A detective has been asking your neighbors quiet questions about you.",
+    choices: [
+      {
+        label: "Lay low for a while",
+        outcomes: [
+          { chance: 1, text: "You keep your head down and let the attention fade.", deltas: { heat: -20, happiness: -2 } },
+        ],
+      },
+      {
+        label: "Confront the detective directly",
+        outcomes: [
+          { chance: 0.4, text: "You convince them they're barking up the wrong tree. For now.", deltas: { heat: -10, smarts: 1 } },
+          { chance: 0.6, text: "It goes badly — now they're even more interested in you.", deltas: { heat: 15, happiness: -5 } },
+        ],
+      },
+      {
+        label: "Ignore it",
+        outcomes: [
+          { chance: 1, text: "You decide not to think about it. Probably fine.", deltas: { heat: 5 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "gang_loyalty_test",
+    minAge: 18,
+    maxAge: 75,
+    weight: 2,
+    repeatable: true,
+    requires: (c) => !!c.criminal.gang,
+    prompt: "Your crew wants you to take the fall for a job that went wrong. It would prove your loyalty.",
+    choices: [
+      {
+        label: "Take the fall",
+        outcomes: [
+          {
+            chance: 1,
+            text: "You take the charge without naming names. The crew won't forget it — but the judge doesn't go easy.",
+            deltas: { happiness: -8 },
+            flags: {},
+            schedule: { eventId: "gang_loyalty_payoff", inYears: 2 },
+          },
+        ],
+      },
+      {
+        label: "Refuse",
+        outcomes: [
+          { chance: 1, text: "You refuse. The crew's trust in you takes a real hit.", deltas: { happiness: -3, heat: -5 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "gang_loyalty_payoff",
+    minAge: 18,
+    maxAge: 77,
+    weight: 0,
+    requires: (c) => !!c.criminal.gang,
+    prompt: "Word finally comes down: the crew hasn't forgotten who took the fall for them.",
+    outcomes: [
+      { chance: 1, text: "A envelope of cash shows up as thanks, no questions asked.", deltas: { money: 5000, happiness: 8 } },
+    ],
+  },
+  {
+    id: "record_background_check",
+    minAge: 18,
+    maxAge: 70,
+    weight: 3,
+    repeatable: true,
+    requires: (c) => c.flags.hasRecord && !c.career.job,
+    prompt: "A promising job offer quietly falls through after a background check turns up your record.",
+    outcomes: [
+      { chance: 1, text: "Nobody says it outright, but you know exactly why the offer disappeared.", deltas: { happiness: -6 } },
+    ],
+  },
+  {
+    id: "fugitive_close_call",
+    minAge: 18,
+    maxAge: 90,
+    weight: 3,
+    repeatable: true,
+    requires: (c) => c.jail.isFugitive,
+    prompt: "A police cruiser slows down behind you, and for a second you're sure this is it.",
+    choices: [
+      {
+        label: "Stay calm and keep walking",
+        outcomes: [
+          { chance: 0.75, text: "It rolls past. Not this time.", deltas: { happiness: -3 } },
+          { chance: 0.25, text: "It pulls over just ahead of you, lights flashing.", deltas: { happiness: -10, heat: 15 } },
+        ],
+      },
+      {
+        label: "Duck into the nearest building",
+        outcomes: [
+          { chance: 0.6, text: "You disappear into a crowded store and lose them.", deltas: { happiness: -2 } },
+          { chance: 0.4, text: "Ducking away like that draws exactly the attention you didn't want.", deltas: { heat: 10 } },
+        ],
+      },
+    ],
+  },
 ];

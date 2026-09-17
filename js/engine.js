@@ -86,6 +86,7 @@ function applyDeltas(character, deltas) {
   if (deltas.smarts != null) s.smarts = clampStat(s.smarts + deltas.smarts);
   if (deltas.looks != null) s.looks = clampStat(s.looks + deltas.looks);
   if (deltas.money != null) character.money += deltas.money;
+  if (deltas.heat != null) character.criminal.heat = clampStat(character.criminal.heat + deltas.heat);
 }
 
 // Applies one resolved outcome: stat deltas, flag changes, a scheduled

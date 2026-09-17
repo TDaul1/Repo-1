@@ -24,7 +24,20 @@ function createCharacter({ name, nationality, gender }) {
       looks: clampStat(randInt(30, 70)),
     },
     money: randInt(0, 200), // birth gifts / allowance
-    relationships: [], // populated in a later phase
+    relationships: [], // [{ id, name, type, quality }] — seeded at birth in main.js
+    education: {
+      stage: "none", // none -> elementary -> middle -> high -> high_grad -> college -> college_grad -> grad -> grad_grad
+      gpa: 70,
+      major: null,
+      yearsInStage: 0,
+      dropout: false,
+    },
+    career: {
+      job: null, // { id, title, category, salary, level }
+      yearsAtJob: 0,
+    },
+    assets: [], // [{ id, kind: 'car'|'house', name, value, icon }]
+    jail: { yearsLeft: 0 },
     flags: {
       hasSibling: Math.random() < 0.6,
     },
@@ -94,6 +107,11 @@ function applyAgingDrift(character) {
     const decay = Math.floor((character.age - 50) / 15); // grows every ~15 years
     s.health = clampStat(s.health + randInt(-2 - decay, 1));
   }
+}
+
+function netWorth(character) {
+  const assetValue = character.assets.reduce((sum, a) => sum + a.value, 0);
+  return character.money + assetValue;
 }
 
 function epitaphFor(character) {

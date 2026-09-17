@@ -33,6 +33,11 @@ const els = {
   ageUpBtn: document.getElementById("age-up-btn"),
   newLifeTopbarBtn: document.getElementById("new-life-topbar-btn"),
   healthActivityBtn: document.getElementById("activity-health-btn"),
+  schoolActivityBtn: document.getElementById("activity-school-btn"),
+  jobActivityBtn: document.getElementById("activity-job-btn"),
+  assetsActivityBtn: document.getElementById("activity-assets-btn"),
+  relationshipsActivityBtn: document.getElementById("activity-relationships-btn"),
+  crimeActivityBtn: document.getElementById("activity-crime-btn"),
 
   eventModal: document.getElementById("event-modal"),
   eventModalPrompt: document.getElementById("event-modal-prompt"),
@@ -73,7 +78,9 @@ function renderGame() {
 
   els.portrait.textContent = portraitFor(character);
   els.charName.textContent = character.name;
-  els.charMeta.textContent = `Age ${character.age} · ${character.gender} · ${character.nationality}`;
+  const jobBit = character.career.job ? ` · ${character.career.job.title}` : "";
+  const jailBit = character.jail.yearsLeft > 0 ? ` · 🔒 In Prison` : "";
+  els.charMeta.textContent = `Age ${character.age} · ${character.gender} · ${character.nationality}${jobBit}${jailBit}`;
 
   els.barHealth.style.width = s.health + "%";
   els.barHappiness.style.width = s.happiness + "%";
@@ -130,6 +137,7 @@ function startNewLife() {
   });
 
   logEvent(character, 0, `${character.name} was born in a ${character.nationality} family.`);
+  seedFamily(character);
   renderedLogCount = 0;
 
   showScreen("game");
@@ -141,6 +149,26 @@ function ageUp() {
 
   character.age += 1;
   applyAgingDrift(character);
+
+  if (character.jail.yearsLeft > 0) {
+    character.jail.yearsLeft -= 1;
+    character.stats.happiness = clampStat(character.stats.happiness - randInt(2, 6));
+    character.stats.health = clampStat(character.stats.health - randInt(0, 3));
+    logEvent(
+      character,
+      character.age,
+      character.jail.yearsLeft > 0
+        ? `${character.name} spent another year behind bars. ${character.jail.yearsLeft} year(s) left.`
+        : `${character.name} served the remainder of their sentence and was released.`
+    );
+    renderGame();
+    finalizeYear();
+    return;
+  }
+
+  advanceEducation(character);
+  runCareerYear(character);
+  decayRelationships(character);
 
   const events = selectEventsForYear(character, EVENTS);
   const interactive = events.filter((e) => e.choices && e.choices.length);
@@ -260,10 +288,21 @@ function showDeathScreen(cause) {
   els.deathTitle.textContent = `${character.name} has died.`;
   els.deathCause.textContent = `Cause of death: ${cause}, at age ${character.age}.`;
 
+  const careerLine = character.career.job ? character.career.job.title : "Never held a job";
+  const eduLabels = {
+    none: "No schooling", elementary: "Elementary school", middle: "Middle school",
+    high: "High school (incomplete)", dropout: "High school dropout", high_grad: "High school graduate",
+    college: "College (incomplete)", dropout_college: "College dropout", college_grad: "College graduate",
+    grad: "Grad school (incomplete)", grad_grad: "Graduate degree",
+  };
+  const eduLine = eduLabels[character.education.stage] || character.education.stage;
+
   els.deathSummary.innerHTML = `
     <div class="row"><span>Age at death</span><b>${character.age}</b></div>
     <div class="row"><span>Nationality</span><b>${character.nationality}</b></div>
-    <div class="row"><span>Net worth</span><b>$${character.money.toLocaleString()}</b></div>
+    <div class="row"><span>Career</span><b>${careerLine}</b></div>
+    <div class="row"><span>Education</span><b>${eduLine}</b></div>
+    <div class="row"><span>Net worth</span><b>$${netWorth(character).toLocaleString()}</b></div>
     <div class="row"><span>Final health</span><b>${character.stats.health}</b></div>
     <div class="row"><span>Final happiness</span><b>${character.stats.happiness}</b></div>
   `;
@@ -292,6 +331,11 @@ els.newLifeTopbarBtn.addEventListener("click", () => {
   }
 });
 els.healthActivityBtn.addEventListener("click", openHealthActivity);
+els.schoolActivityBtn.addEventListener("click", () => openSchoolActivity(character));
+els.jobActivityBtn.addEventListener("click", () => openJobActivity(character));
+els.assetsActivityBtn.addEventListener("click", () => openAssetsActivity(character));
+els.relationshipsActivityBtn.addEventListener("click", () => openRelationshipsActivity(character));
+els.crimeActivityBtn.addEventListener("click", () => openCrimeActivity(character));
 
 // ---------- init ----------
 populateNationalitySelect();

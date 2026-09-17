@@ -14,6 +14,8 @@
     <h1>Lifeline</h1>
     <p class="tagline">Live a whole life, one year at a time.</p>
 
+    <div class="save-slots" id="save-slots-panel"></div>
+
     <label class="field">
       <span>Name</span>
       <div class="name-row">
@@ -34,6 +36,11 @@
         <option value="Male">Male</option>
         <option value="Nonbinary">Nonbinary</option>
       </select>
+    </label>
+
+    <label class="field">
+      <span>Save Slot</span>
+      <select id="save-slot-select"></select>
     </label>
 
     <button type="button" id="start-btn" class="btn-primary">Start Life</button>
@@ -151,6 +158,7 @@
 </section>
 
 <script src="js/data.js"></script>
+<script src="js/save.js"></script>
 <script src="js/state.js"></script>
 <script src="js/events.js"></script>
 <script src="js/engine.js"></script>

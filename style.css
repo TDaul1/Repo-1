@@ -103,6 +103,43 @@ button {
   font-size: 0.95rem;
 }
 
+.save-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.save-slot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.save-slot-info {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.save-slot-info b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.save-slot-buttons {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.save-slot-buttons button {
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
 .field {
   display: block;
   margin-bottom: 18px;

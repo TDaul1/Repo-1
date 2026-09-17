@@ -5,12 +5,15 @@
 
 let character = null;
 let eventQueue = [];
+let currentSaveSlot = 1;
 
 const els = {
   createScreen: document.getElementById("create-screen"),
   gameScreen: document.getElementById("game-screen"),
   deathScreen: document.getElementById("death-screen"),
 
+  saveSlotsPanel: document.getElementById("save-slots-panel"),
+  saveSlotSelect: document.getElementById("save-slot-select"),
   nameInput: document.getElementById("name-input"),
   randomizeNameBtn: document.getElementById("randomize-name-btn"),
   nationalitySelect: document.getElementById("nationality-select"),
@@ -73,6 +76,77 @@ function populateNationalitySelect() {
   els.nationalitySelect.value = randomFrom(NATIONALITIES);
 }
 
+function renderSaveSlotsPanel() {
+  const slots = listSaveSlots();
+
+  els.saveSlotsPanel.innerHTML = "";
+  for (const { slot, character: saved } of slots) {
+    const row = document.createElement("div");
+    row.className = "save-slot-row";
+
+    const info = document.createElement("div");
+    info.className = "save-slot-info";
+    if (saved) {
+      const statusBit = saved.alive ? `age ${saved.age}` : `deceased at ${saved.age}`;
+      info.innerHTML = `Slot ${slot}: <b>${saved.name}</b> — ${statusBit}`;
+    } else {
+      info.textContent = `Slot ${slot}: empty`;
+    }
+    row.appendChild(info);
+
+    const buttons = document.createElement("div");
+    buttons.className = "save-slot-buttons";
+    if (saved) {
+      const loadBtn = document.createElement("button");
+      loadBtn.type = "button";
+      loadBtn.className = "btn-secondary";
+      loadBtn.textContent = "Load";
+      loadBtn.addEventListener("click", () => loadGame(slot));
+      buttons.appendChild(loadBtn);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "btn-secondary";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => {
+        if (confirm(`Delete the save in Slot ${slot}? This can't be undone.`)) {
+          deleteSlot(slot);
+          renderSaveSlotsPanel();
+        }
+      });
+      buttons.appendChild(deleteBtn);
+    }
+    row.appendChild(buttons);
+    els.saveSlotsPanel.appendChild(row);
+  }
+
+  els.saveSlotSelect.innerHTML = "";
+  for (let i = 1; i <= SAVE_SLOT_COUNT; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    const occupied = slots.find((s) => s.slot === i)?.character;
+    opt.textContent = occupied ? `Slot ${i} (overwrite ${occupied.name})` : `Slot ${i} (empty)`;
+    els.saveSlotSelect.appendChild(opt);
+  }
+  els.saveSlotSelect.value = firstEmptySlot();
+}
+
+function loadGame(slot) {
+  const saved = loadFromSlot(slot);
+  if (!saved) return;
+  character = saved;
+  currentSaveSlot = slot;
+  renderedLogCount = 0;
+
+  if (character.alive) {
+    showScreen("game");
+    renderGame();
+  } else {
+    renderGame();
+    showDeathScreen(character.deathCause || "unknown causes");
+  }
+}
+
 function portraitFor(character) {
   if (character.gender === "Male") return character.age < 13 ? "👦" : character.age < 20 ? "🧑" : "👨";
   if (character.gender === "Female") return character.age < 13 ? "👧" : character.age < 20 ? "🧑" : "👩";
@@ -101,6 +175,8 @@ function renderGame() {
   renderStatusBadges();
   renderExtendedStats();
   renderLog();
+
+  saveToSlot(currentSaveSlot, character);
 }
 
 function renderStatusBadges() {
@@ -180,6 +256,8 @@ function startNewLife() {
     nationality: els.nationalitySelect.value,
     gender: els.genderSelect.value,
   });
+
+  currentSaveSlot = parseInt(els.saveSlotSelect.value, 10) || 1;
 
   logEvent(character, 0, `${character.name} was born in a ${character.nationality} family.`);
   seedFamily(character);
@@ -311,6 +389,7 @@ function closeChoiceModal() {
 function killCharacter() {
   character.alive = false;
   const cause = causeOfDeath(character.age, character.stats.health, character);
+  character.deathCause = cause;
   logEvent(character, character.age, `${character.name} died at age ${character.age} from ${cause}.`, "death");
   renderGame();
   showDeathScreen(cause);
@@ -381,6 +460,7 @@ function resetToCreateScreen() {
   character = null;
   els.nameInput.value = "";
   populateNationalitySelect();
+  renderSaveSlotsPanel();
   showScreen("create");
 }
 
@@ -409,4 +489,5 @@ els.godmodeCloseBtn.addEventListener("click", closeGodMode);
 
 // ---------- init ----------
 populateNationalitySelect();
+renderSaveSlotsPanel();
 showScreen("create");

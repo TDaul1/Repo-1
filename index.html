@@ -3,161 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Tycoon: Race to the Singularity</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap">
+<title>Lifeline &mdash; a life simulator</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ============ START SCREEN ============ -->
-<div id="start-screen" class="screen">
-  <div class="start-card">
-    <h1>AI TYCOON</h1>
-    <p class="subtitle">Race to the Singularity (or Whatever Comes First)</p>
-    <div id="start-avatar-slot" class="start-avatar-slot"></div>
-    <p class="pitch">
-      Build data centers. Bribe town councils. Buy your competitors before they buy you.
-      And somewhere along the way, keep the increasingly opinionated superintelligence
-      you're building from firing you, replacing you, or ending civilization. Good luck.
-    </p>
-    <label for="company-name-input">Name your company</label>
-    <input id="company-name-input" type="text" placeholder="e.g. Total Domination Technologies" maxlength="40">
-    <label for="ai-name-input">Name your AI</label>
-    <input id="ai-name-input" type="text" placeholder="e.g. ORACLE-9" maxlength="40">
-    <button id="start-btn" class="primary-btn">Begin World Domination</button>
-    <button id="continue-btn" class="secondary-btn" hidden>Continue Saved Game</button>
+<!-- ============ CHARACTER CREATION SCREEN ============ -->
+<section id="create-screen" class="screen">
+  <div class="create-card">
+    <h1>Lifeline</h1>
+    <p class="tagline">Live a whole life, one year at a time.</p>
+
+    <label class="field">
+      <span>Name</span>
+      <div class="name-row">
+        <input type="text" id="name-input" maxlength="24" placeholder="Enter a name&hellip;">
+        <button type="button" id="randomize-name-btn" class="btn-secondary" title="Random name">🎲</button>
+      </div>
+    </label>
+
+    <label class="field">
+      <span>Nationality</span>
+      <select id="nationality-select"></select>
+    </label>
+
+    <label class="field">
+      <span>Gender</span>
+      <select id="gender-select">
+        <option value="Female">Female</option>
+        <option value="Male">Male</option>
+        <option value="Nonbinary">Nonbinary</option>
+      </select>
+    </label>
+
+    <button type="button" id="start-btn" class="btn-primary">Start Life</button>
   </div>
-</div>
+</section>
 
-<!-- ============ GAME SCREEN ============ -->
-<div id="game-screen" class="screen" hidden>
-
-  <header id="top-bar">
-    <div class="brand">
-      <div class="brand-left">
-        <div id="hud-avatar-slot" class="hud-avatar-slot"></div>
-        <span id="hud-company-name">Your Company</span>
-      </div>
-      <span class="turn-counter">Turn <span id="hud-turn">1</span></span>
-    </div>
-    <div class="stat-bar" id="stat-bar">
-      <div class="stat" data-stat="cash">
-        <span class="stat-label">Cash</span>
-        <span class="stat-value" id="stat-cash">$0</span>
-      </div>
-      <div class="stat" data-stat="compute">
-        <span class="stat-label">Compute</span>
-        <span class="stat-value" id="stat-compute">0</span>
-      </div>
-      <div class="stat" data-stat="talent">
-        <span class="stat-label">Talent</span>
-        <span class="stat-value" id="stat-talent">0</span>
-      </div>
-      <div class="stat meter" data-stat="capability">
-        <span class="stat-label">Capability</span>
-        <div class="meter-track"><div class="meter-fill" id="meter-capability"></div></div>
-      </div>
-      <div class="stat meter" data-stat="alignment">
-        <span class="stat-label">Alignment</span>
-        <div class="meter-track"><div class="meter-fill" id="meter-alignment"></div></div>
-      </div>
-      <div class="stat meter" data-stat="reputation">
-        <span class="stat-label">Reputation</span>
-        <div class="meter-track"><div class="meter-fill" id="meter-reputation"></div></div>
-      </div>
-      <div class="stat meter" data-stat="heat">
-        <span class="stat-label">Regulatory Heat</span>
-        <div class="meter-track"><div class="meter-fill" id="meter-heat"></div></div>
-      </div>
-      <div class="stat meter" data-stat="marketShare">
-        <span class="stat-label">Market Share</span>
-        <div class="meter-track"><div class="meter-fill" id="meter-marketShare"></div></div>
-      </div>
-    </div>
+<!-- ============ MAIN GAME SCREEN ============ -->
+<section id="game-screen" class="screen hidden">
+  <header class="topbar">
+    <div class="topbar-title">Lifeline</div>
+    <button type="button" id="new-life-topbar-btn" class="btn-secondary small">New Life</button>
   </header>
 
-  <nav id="tab-nav">
-    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-    <button class="tab-btn" data-tab="datacenters">Data Centers</button>
-    <button class="tab-btn" data-tab="acquisitions">Acquisitions</button>
-    <button class="tab-btn" data-tab="research">Research &amp; Ops</button>
-    <button class="tab-btn" data-tab="aichat">AI Chat <span id="ai-chat-badge" class="badge" hidden>!</span></button>
-  </nav>
+  <div class="game-layout">
 
-  <main id="tab-content">
+    <!-- LEFT: character summary + stats -->
+    <aside class="sidebar">
+      <div class="portrait-card">
+        <div id="portrait" class="portrait">🙂</div>
+        <div class="char-name" id="char-name">&mdash;</div>
+        <div class="char-meta" id="char-meta">&mdash;</div>
+      </div>
 
-    <section id="tab-dashboard" class="tab-panel active">
-      <div id="dashboard-hero" class="dashboard-hero">
-        <div id="dashboard-avatar-slot" class="dashboard-avatar-slot"></div>
-        <div class="dashboard-hero-text">
-          <h2 id="dash-ai-name">THE MODEL</h2>
-          <p id="dashboard-hero-line" class="hero-line">Awaiting instructions. This will not last.</p>
+      <div class="stats-card">
+        <div class="stat-row">
+          <span class="stat-label">❤️ Health</span>
+          <div class="stat-bar"><div class="stat-fill health" id="bar-health"></div></div>
+          <span class="stat-value" id="val-health">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">😊 Happiness</span>
+          <div class="stat-bar"><div class="stat-fill happiness" id="bar-happiness"></div></div>
+          <span class="stat-value" id="val-happiness">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">🧠 Smarts</span>
+          <div class="stat-bar"><div class="stat-fill smarts" id="bar-smarts"></div></div>
+          <span class="stat-value" id="val-smarts">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">✨ Looks</span>
+          <div class="stat-bar"><div class="stat-fill looks" id="bar-looks"></div></div>
+          <span class="stat-value" id="val-looks">0</span>
+        </div>
+        <div class="stat-row money-row">
+          <span class="stat-label">💰 Money</span>
+          <span class="stat-value money" id="val-money">$0</span>
         </div>
       </div>
-      <h3 class="section-label">Headlines</h3>
-      <div id="news-log" class="headline-grid"></div>
-    </section>
+    </aside>
 
-    <section id="tab-datacenters" class="tab-panel">
-      <h2>Expansion Map</h2>
-      <p class="panel-hint">Pick a spot on the map, then build or bribe from the panel. Every location tracks its own approval.</p>
-      <div class="map-layout">
-        <div class="map-panel">
-          <div id="community-map" class="community-map"></div>
-        </div>
-        <div id="community-detail" class="community-detail"></div>
-      </div>
-      <h3 class="section-label">Community Approval</h3>
-      <div id="approval-chart" class="approval-chart"></div>
-    </section>
+    <!-- CENTER: life event log -->
+    <main class="log-panel">
+      <div id="event-log" class="event-log"></div>
+    </main>
 
-    <section id="tab-acquisitions" class="tab-panel">
-      <h2>Rival Companies</h2>
-      <p class="panel-hint">Buy them before they become a problem. Or a headline.</p>
-      <div id="rival-list" class="card-grid"></div>
-    </section>
-
-    <section id="tab-research" class="tab-panel">
-      <h2>Research &amp; Operations</h2>
-      <div class="card-grid" id="ops-list"></div>
-    </section>
-
-    <section id="tab-aichat" class="tab-panel">
-      <h2>Conversations With <span id="chat-ai-name">THE MODEL</span></h2>
-      <p class="panel-hint">Every demand your AI has made, and how you answered it.</p>
-      <div id="chat-log" class="log-list"></div>
-    </section>
-
-  </main>
-
-  <footer id="bottom-bar">
-    <div id="ap-indicator">Action Points: <span id="ap-value">3</span> / <span id="ap-max">3</span></div>
-    <button id="end-turn-btn" class="primary-btn">End Turn</button>
-    <button id="restart-btn" class="secondary-btn">Abandon Company</button>
-  </footer>
-</div>
-
-<!-- ============ MODAL ============ -->
-<div id="modal-overlay" class="screen" hidden>
-  <div id="modal-box"></div>
-</div>
-
-<!-- ============ END SCREEN ============ -->
-<div id="end-screen" class="screen" hidden>
-  <div class="start-card">
-    <div id="end-avatar-slot" class="start-avatar-slot"></div>
-    <h1 id="end-title">GAME OVER</h1>
-    <p id="end-body" class="pitch"></p>
-    <p id="end-stats" class="end-stats"></p>
-    <button id="play-again-btn" class="primary-btn">Play Again</button>
   </div>
-</div>
+
+  <!-- BOTTOM: actions -->
+  <footer class="action-bar">
+    <button type="button" id="age-up-btn" class="btn-primary big">Age Up ⏩</button>
+    <div class="activities">
+      <button type="button" class="btn-secondary" disabled title="Coming soon">🎓 School</button>
+      <button type="button" class="btn-secondary" disabled title="Coming soon">💼 Job</button>
+      <button type="button" class="btn-secondary" disabled title="Coming soon">🏠 Assets</button>
+      <button type="button" class="btn-secondary" disabled title="Coming soon">❤️ Relationships</button>
+      <button type="button" class="btn-secondary" disabled title="Coming soon">🕶️ Crime</button>
+      <button type="button" class="btn-secondary" disabled title="Coming soon">🏥 Health</button>
+    </div>
+  </footer>
+</section>
+
+<!-- ============ DEATH SCREEN ============ -->
+<section id="death-screen" class="screen hidden">
+  <div class="death-card">
+    <div class="death-icon">⚰️</div>
+    <h1 id="death-title">You have died.</h1>
+    <p class="death-cause" id="death-cause">&mdash;</p>
+
+    <div class="death-summary" id="death-summary"></div>
+
+    <blockquote class="epitaph" id="death-epitaph"></blockquote>
+
+    <button type="button" id="new-life-btn" class="btn-primary big">New Life</button>
+  </div>
+</section>
 
 <script src="js/data.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/art.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/state.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>

@@ -69,7 +69,11 @@ function tickConditions(character) {
     }
 
     if (cond.category === "addiction") {
-      cond.severity = clampStat(cond.severity + randInt(-2, 8));
+      // Roughly balanced drift by itself (mild dependency doesn't
+      // automatically spiral without further reinforcement), but the
+      // character's discipline stat pulls it one way or the other.
+      const disciplinePull = Math.round((50 - character.stats.discipline) / 20);
+      cond.severity = clampStat(cond.severity + randInt(-4, 5) + disciplinePull);
       const cost = Math.round(cond.severity * randInt(4, 12));
       character.money -= cost;
       character.stats.health = clampStat(character.stats.health - Math.round(cond.severity / 45));

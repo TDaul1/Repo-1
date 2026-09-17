@@ -129,16 +129,25 @@ function openSchoolActivity(character) {
       [...options, { label: "Not right now", action: "cancel" }],
       (choice) => {
         if (choice.action !== "enroll") return;
-        if (character.money < choice.major.tuition) {
+        // A real downstream consequence of the study/slack-off choices
+        // made all through school: a strong GPA earns a scholarship.
+        const scholarshipRate = edu.gpa >= 85 ? 0.5 : edu.gpa >= 70 ? 0.25 : 0;
+        const tuition = Math.round(choice.major.tuition * (1 - scholarshipRate));
+        if (character.money < tuition) {
           logEvent(character, character.age, `${character.name} couldn't afford tuition for ${choice.major.label}. Maybe next year.`);
           renderGame();
           return;
         }
-        character.money -= choice.major.tuition;
+        character.money -= tuition;
         edu.stage = "college";
         edu.major = choice.major.id;
         edu.yearsInStage = 0;
-        logEvent(character, character.age, `${character.name} enrolled in college to study ${choice.major.label}.`);
+        if (scholarshipRate > 0) {
+          addAchievement(character, `Earned a ${Math.round(scholarshipRate * 100)}% scholarship (${edu.gpa}% GPA)`);
+          logEvent(character, character.age, `${character.name}'s ${edu.gpa}% GPA earned a scholarship — enrolled to study ${choice.major.label} for $${tuition.toLocaleString()}.`);
+        } else {
+          logEvent(character, character.age, `${character.name} enrolled in college to study ${choice.major.label}.`);
+        }
         renderGame();
       }
     );

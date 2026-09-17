@@ -85,8 +85,16 @@ function applyDeltas(character, deltas) {
   if (deltas.happiness != null) s.happiness = clampStat(s.happiness + deltas.happiness);
   if (deltas.smarts != null) s.smarts = clampStat(s.smarts + deltas.smarts);
   if (deltas.looks != null) s.looks = clampStat(s.looks + deltas.looks);
+  if (deltas.mentalHealth != null) s.mentalHealth = clampStat(s.mentalHealth + deltas.mentalHealth);
+  if (deltas.stress != null) s.stress = clampStat(s.stress + deltas.stress);
+  if (deltas.discipline != null) s.discipline = clampStat(s.discipline + deltas.discipline);
+  if (deltas.athleticism != null) s.athleticism = clampStat(s.athleticism + deltas.athleticism);
+  if (deltas.socialSkill != null) s.socialSkill = clampStat(s.socialSkill + deltas.socialSkill);
   if (deltas.money != null) character.money += deltas.money;
   if (deltas.heat != null) character.criminal.heat = clampStat(character.criminal.heat + deltas.heat);
+  if (deltas.reputation != null) character.reputation = clampSigned(character.reputation + deltas.reputation);
+  if (deltas.fame != null) character.fame = clampStat(character.fame + deltas.fame);
+  if (deltas.morality != null) character.morality = clampSigned(character.morality + deltas.morality);
 }
 
 // Applies one resolved outcome: stat deltas, flag changes, a scheduled
@@ -95,6 +103,12 @@ function applyDeltas(character, deltas) {
 function applyOutcome(character, event, outcome) {
   applyDeltas(character, outcome.deltas);
   if (outcome.flags) Object.assign(character.flags, outcome.flags);
+  if (outcome.condition) {
+    addCondition(character, outcome.condition.id, outcome.condition.severity);
+  }
+  if (outcome.achievement) {
+    addAchievement(character, outcome.achievement);
+  }
   if (outcome.schedule) {
     character.scheduledEvents.push({
       eventId: outcome.schedule.eventId,
